@@ -158,7 +158,7 @@ const ActivityFeedScreen = () => {
           <View style={styles.emptyContainer}>
             <Ionicons name="time-outline" size={64} color={colors.textSecondary} />
             <Text style={styles.emptyTitle}>No Activity Yet</Text>
-            <Text style={styles.emptySubtitle}>Group members haven't completed any activities recently.</Text>
+              <Text style={styles.emptySubtitle}>Group members haven&apos;t completed any activities recently.</Text>
           </View>
         ) : (
           activities.map((activity) => (

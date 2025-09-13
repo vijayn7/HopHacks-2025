@@ -218,7 +218,9 @@ const HomeScreen = () => {
       {/* Profile Widget */}
       <View style={styles.profileWidget}>
         <View style={styles.profileIcon}>
-          <Ionicons name="person" size={40} color={colors.primary} />
+          <Text style={styles.profileIconText}>
+            {user.name.charAt(0).toUpperCase()}
+          </Text>
         </View>
         <View style={styles.profileInfo}>
           <Text style={styles.userName}>{user.name}</Text>
@@ -378,10 +380,15 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 20,
+  },
+  profileIconText: {
+    fontSize: 32,
+    fontWeight: '600',
+    color: colors.textWhite,
   },
   profileInfo: {
     flex: 1,
