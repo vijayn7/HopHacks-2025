@@ -11,7 +11,8 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { lightColors as colors } from '../constants/colors';
+import { ColorScheme } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { getEventById } from '../lib/apiService';
 
 interface EventDetail {
@@ -44,6 +45,8 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
   visible,
   onClose,
 }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -264,258 +267,259 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F8F8',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-    paddingHorizontal: 20,
-  },
-  errorText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  errorBackButton: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: colors.textWhite,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  headerContainer: {
-    position: 'relative',
-  },
-  bannerContainer: {
-    height: 240,
-    backgroundColor: '#F0F0F0',
-    position: 'relative',
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-  },
-  imagePlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    borderRadius: 16,
-    margin: 16,
-  },
-  placeholderIcon: {
-    marginBottom: 8,
-  },
-  placeholderText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.primary,
-    opacity: 0.8,
-  },
-  navButton: {
-    position: 'absolute',
-    top: 50,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
+const getStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  backButton: {
-    left: 20,
-  },
-  shareButton: {
-    right: 20,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 120, // Space for sticky button
-  },
-  mainInfoCard: {
-    backgroundColor: colors.surface,
-    marginHorizontal: 20,
-    marginTop: -16,
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 8,
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
     },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
-    zIndex: 1,
-  },
-  eventTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: 8,
-    lineHeight: 34,
-  },
-  organizationName: {
-    fontSize: 18,
-    color: colors.textSecondary,
-    fontWeight: '500',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  verifiedIcon: {
-    marginLeft: 6,
-  },
-  detailsCard: {
-    backgroundColor: colors.surface,
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    loadingText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: colors.textSecondary,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  detailIcon: {
-    marginRight: 16,
-    width: 24,
-    textAlign: 'center',
-  },
-  detailContent: {
-    flex: 1,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: '500',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  detailValue: {
-    fontSize: 17,
-    color: colors.textPrimary,
-    fontWeight: '600',
-    lineHeight: 22,
-  },
-  detailDivider: {
-    height: 1,
-    backgroundColor: colors.border || '#E5E5E5',
-    marginVertical: 4,
-    marginLeft: 40, // Align with content, not icons
-  },
-  descriptionCard: {
-    backgroundColor: colors.surface,
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      paddingHorizontal: 20,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  sectionHeader: {
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.primary,
-  },
-  descriptionHeading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-  },
-  descriptionText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    lineHeight: 24,
-    fontWeight: '400',
-  },
-  bottomSpacing: {
-    height: 40,
-  },
-  stickyButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.surface,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40, // Safe area for iOS home bar
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: -4,
+    errorText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: 'center',
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  joinButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 18,
-    borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    errorBackButton: {
+      marginTop: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      backgroundColor: colors.primary,
+      borderRadius: 8,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  joinButtonText: {
-    color: colors.textWhite,
-    fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-});
+    backButtonText: {
+      color: colors.textWhite,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    headerContainer: {
+      position: 'relative',
+    },
+    bannerContainer: {
+      height: 240,
+      backgroundColor: colors.surfaceSecondary,
+      position: 'relative',
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+    },
+    imagePlaceholder: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      borderRadius: 16,
+      margin: 16,
+    },
+    placeholderIcon: {
+      marginBottom: 8,
+    },
+    placeholderText: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.primary,
+      opacity: 0.8,
+    },
+    navButton: {
+      position: 'absolute',
+      top: 50,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    backButton: {
+      left: 20,
+    },
+    shareButton: {
+      right: 20,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingBottom: 120, // Space for sticky button
+    },
+    mainInfoCard: {
+      backgroundColor: colors.surface,
+      marginHorizontal: 20,
+      marginTop: -16,
+      borderRadius: 20,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 8,
+      },
+      shadowOpacity: 0.12,
+      shadowRadius: 16,
+      elevation: 8,
+      zIndex: 1,
+    },
+    eventTitle: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: colors.textPrimary,
+      marginBottom: 8,
+      lineHeight: 34,
+    },
+    organizationName: {
+      fontSize: 18,
+      color: colors.textSecondary,
+      fontWeight: '500',
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    verifiedIcon: {
+      marginLeft: 6,
+    },
+    detailsCard: {
+      backgroundColor: colors.surface,
+      marginHorizontal: 20,
+      marginTop: 20,
+      borderRadius: 20,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+    },
+    detailIcon: {
+      marginRight: 16,
+      width: 24,
+      textAlign: 'center',
+    },
+    detailContent: {
+      flex: 1,
+    },
+    detailLabel: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      fontWeight: '500',
+      marginBottom: 4,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    detailValue: {
+      fontSize: 17,
+      color: colors.textPrimary,
+      fontWeight: '600',
+      lineHeight: 22,
+    },
+    detailDivider: {
+      height: 1,
+      backgroundColor: colors.border || '#E5E5E5',
+      marginVertical: 4,
+      marginLeft: 40, // Align with content, not icons
+    },
+    descriptionCard: {
+      backgroundColor: colors.surface,
+      marginHorizontal: 20,
+      marginTop: 20,
+      borderRadius: 20,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+    sectionHeader: {
+      marginBottom: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 2,
+      borderBottomColor: colors.primary,
+    },
+    descriptionHeading: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: colors.textPrimary,
+    },
+    descriptionText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      lineHeight: 24,
+      fontWeight: '400',
+    },
+    bottomSpacing: {
+      height: 40,
+    },
+    stickyButtonContainer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: colors.surface,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 40, // Safe area for iOS home bar
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: -4,
+      },
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    joinButton: {
+      backgroundColor: colors.primary,
+      paddingVertical: 18,
+      borderRadius: 16,
+      alignItems: 'center',
+      shadowColor: colors.primary,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    joinButtonText: {
+      color: colors.textWhite,
+      fontSize: 20,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+    },
+  });
 
 export default SpecificEventPage;
