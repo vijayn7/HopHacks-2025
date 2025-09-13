@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
-import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
+import MyEventsEventCard, { MyEventsEventCardProps } from '../../components/MyEvents/MyEventsEventCard';
 import QRScannerModal from '../../components/Events/QRScannerModal';
 import SpecificEventPage from '../../components/SpecificEventPage';
 import { getJoinedEvents } from '../../lib/apiService';
 
-interface JoinedEvent extends EventsEventCardProps {
+interface JoinedEvent extends MyEventsEventCardProps {
   org_name: string;
   distance?: string;
 }
@@ -61,8 +61,6 @@ const MyEventsScreen = () => {
             distance: event.lat && event.lng ? 'Near you' : 'Location TBD',
             checkInTime: join.check_in_at,
             checkOutTime: join.check_out_at,
-            onPress: undefined,
-            showLearnMoreButton: false,
           };
           if (!grouped[dateKey]) grouped[dateKey] = [];
           grouped[dateKey].push(formatted);
@@ -129,10 +127,9 @@ const MyEventsScreen = () => {
               </View>
               {eventsByDate[date].map((event) => (
                 <View key={event.id} style={styles.eventWrapper}>
-                  <EventsEventCard
+                  <MyEventsEventCard
                     {...event}
                     onPress={() => openEvent(event.id)}
-                    showLearnMoreButton={false}
                     showScanButton={new Date(event.ends_at) >= new Date()}
                     onScanPress={() => setScannerVisible(true)}
                     checkInTime={new Date(event.ends_at) < new Date() ? event.checkInTime : undefined}
