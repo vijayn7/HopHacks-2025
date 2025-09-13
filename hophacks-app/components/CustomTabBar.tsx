@@ -50,6 +50,7 @@ const CustomTabBar: React.FC<TabBarProps> = ({ activeTab, onTabPress }) => {
 
   const tabWidth = (screenWidth - 8) / tabs.length; // Account for paddingHorizontal: 4 on both sides
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const activeIndex = tabs.findIndex(tab => tab.id === activeTab);
     Animated.spring(animatedValue, {

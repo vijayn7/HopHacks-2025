@@ -165,7 +165,7 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({
                 <Ionicons name="people-outline" size={64} color={colors.textSecondary} />
                 <Text style={styles.emptyTitle}>No Other Members</Text>
                 <Text style={styles.emptySubtitle}>
-                  You're the only member in this group. Invite others using the group's invite code to start building your team!
+                  You&apos;re the only member in this group. Invite others using the group&apos;s invite code to start building your team!
                 </Text>
               </View>
             ) : (

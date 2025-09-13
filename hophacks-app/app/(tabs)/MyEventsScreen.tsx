@@ -25,10 +25,18 @@ const MyEventsScreen = () => {
   const [eventPageVisible, setEventPageVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [bannerMessage, setBannerMessage] = useState<string | null>(null);
 
   useEffect(() => {
     init();
   }, []);
+
+  useEffect(() => {
+    if (bannerMessage) {
+      const timer = setTimeout(() => setBannerMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [bannerMessage]);
 
   const init = async () => {
     const { data } = await getCurrentUserProfile();
@@ -128,7 +136,12 @@ const MyEventsScreen = () => {
   );
 
   return (
-    <>
+    <View style={styles.wrapper}>
+      {bannerMessage && (
+        <View style={styles.banner}>
+          <Text style={styles.bannerText}>{bannerMessage}</Text>
+        </View>
+      )}
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {sortedDates.length > 0 ? (
           sortedDates.map((date) => (
@@ -171,15 +184,21 @@ const MyEventsScreen = () => {
       <QRScannerModal
         visible={scannerVisible}
         onClose={() => setScannerVisible(false)}
-        onSuccess={fetchJoinedEvents}
+        onSuccess={(msg) => {
+          setBannerMessage(msg);
+          fetchJoinedEvents();
+        }}
       />
-    </>
+    </View>
   );
 };
 
 export default MyEventsScreen;
 
 const createStyles = (colors: ColorScheme) => StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -238,6 +257,21 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  banner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingVertical: 10,
+    backgroundColor: colors.success,
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  bannerText: {
+    color: colors.textWhite,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 
