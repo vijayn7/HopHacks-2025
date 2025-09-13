@@ -185,7 +185,7 @@ export async function getUnjoinedEvents() {
 }
 
 /**
- * Creates a new event for the organization owned by the current user
+ * Creates a new event associated with the current organizer's organization
  * @param event - Event fields excluding org_id and created_by
  * @returns Newly created event record or error
  */
@@ -205,20 +205,21 @@ export async function createEvent(event: {
 }) {
   const userId = await authService.getCurrentUserId();
 
-  const { data: org, error: orgError } = await supabase
-    .from('organizations')
-    .select('id')
-    .eq('owner_user_id', userId)
+  // Lookup organization membership for the current user
+  const { data: membership, error: membershipError } = await supabase
+    .from('org_members')
+    .select('org_id')
+    .eq('user_id', userId)
     .single();
 
-  if (orgError) {
-    return { data: null, error: orgError };
+  if (membershipError) {
+    return { data: null, error: membershipError };
   }
 
   const { data, error } = await supabase
     .from('events')
     .insert({
-      org_id: org.id,
+      org_id: membership.org_id,
       created_by: userId,
       ...event,
     })
