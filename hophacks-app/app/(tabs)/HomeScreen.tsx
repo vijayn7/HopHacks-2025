@@ -1,11 +1,26 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from 'react-native'
+import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HomeEventCard from '../../components/Home/HomeEventCard';
 import { getUserInfoById, getEventRecommendations } from '@/lib/apiService';
 import { authService } from '../../lib/authService';
+import SpecificEventPage from '../../components/SpecificEventPage';
 
 const HomeScreen = () => {
   // Mock data - replace with real data later
@@ -21,8 +36,18 @@ const HomeScreen = () => {
   });
   const [suggestedEvents, setSuggestedEvents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { colors } = useTheme();
-  const styles = React.useMemo(() => createStyles(colors), [colors]);
+    const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+    const [eventPageVisible, setEventPageVisible] = useState(false);
+    const animations = useRef<Record<string, { slide: Animated.Value; bubble: Animated.Value }>>({});
+    const { colors } = useTheme();
+    const styles = React.useMemo(() => createStyles(colors), [colors]);
+    const screenWidth = Dimensions.get('window').width;
+
+    useEffect(() => {
+      if (Platform.OS === 'android') {
+        UIManager.setLayoutAnimationEnabledExperimental?.(true);
+      }
+    }, []);
 
   // Helper function to determine tier based on points
   const getTierInfo = (points: number) => {
@@ -95,7 +120,7 @@ const HomeScreen = () => {
           console.log('Error fetching events:', eventsError);
         } else if (eventsData) {
           // Transform the data to match the expected format
-          const transformedEvents = eventsData.map((event) => ({
+          const transformedEvents = eventsData.map((event: any) => ({
             id: event.id,
             title: event.title,
             description: event.description,
@@ -177,7 +202,48 @@ const HomeScreen = () => {
     return <LoadingScreen />;
   }
 
+  const openEvent = (id: string) => {
+    setSelectedEventId(id);
+    setEventPageVisible(true);
+  };
+
+  const closeEvent = () => {
+    setEventPageVisible(false);
+    setSelectedEventId(null);
+  };
+
+  const handleEventJoined = (id: string) => {
+    if (!animations.current[id]) {
+      animations.current[id] = {
+        slide: new Animated.Value(0),
+        bubble: new Animated.Value(0),
+      };
+    }
+    const { slide, bubble } = animations.current[id];
+
+    Animated.timing(slide, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    bubble.setValue(1);
+    Animated.sequence([
+      Animated.delay(1000),
+      Animated.timing(bubble, { toValue: 0, duration: 100, useNativeDriver: true }),
+      Animated.timing(bubble, { toValue: 1, duration: 100, useNativeDriver: true }),
+      Animated.timing(bubble, { toValue: 0, duration: 100, useNativeDriver: true }),
+    ]).start(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setSuggestedEvents((prev) => prev.filter((e) => e.id !== id));
+      delete animations.current[id];
+    });
+
+    closeEvent();
+  };
+
   return (
+    <>
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Profile Widget */}
       <View style={styles.profileWidget}>
@@ -225,12 +291,35 @@ const HomeScreen = () => {
           showsHorizontalScrollIndicator={false}
           style={styles.eventsScrollView}
         >
-          {suggestedEvents.map((event) => (
-            <HomeEventCard
-              key={event.id}
-              {...event}
-            />
-          ))}
+          {suggestedEvents.map((event) => {
+            if (!animations.current[event.id]) {
+              animations.current[event.id] = {
+                slide: new Animated.Value(0),
+                bubble: new Animated.Value(0),
+              };
+            }
+            const { slide, bubble } = animations.current[event.id];
+            const translateX = slide.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, screenWidth],
+            });
+            const opacity = slide.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+            return (
+              <View key={event.id} style={styles.suggestedEventWrapper}>
+                <Animated.View style={[styles.joinBubbleContainer, { opacity: bubble }]}>
+                  <View style={styles.joinBubble}>
+                    <Text style={styles.joinBubbleText}>Joined!</Text>
+                  </View>
+                </Animated.View>
+                <Animated.View style={{ transform: [{ translateX }], opacity }}>
+                  <HomeEventCard
+                    {...event}
+                    onPress={() => openEvent(event.id)}
+                  />
+                </Animated.View>
+              </View>
+            );
+          })}
         </ScrollView>
         {suggestedEvents.length === 0 && (
             <Text style={styles.noActivityText}>There are no events happening today near you :(</Text>
@@ -271,6 +360,16 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
     </ScrollView>
+
+    {selectedEventId && (
+      <SpecificEventPage
+        eventId={selectedEventId}
+        visible={eventPageVisible}
+        onClose={closeEvent}
+        onJoinSuccess={() => selectedEventId && handleEventJoined(selectedEventId)}
+      />
+    )}
+    </>
   )
 }
 
@@ -426,6 +525,29 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   eventsScrollView: {
     marginHorizontal: -16,
     paddingHorizontal: 16,
+  },
+  suggestedEventWrapper: {
+    position: 'relative',
+  },
+  joinBubbleContainer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    pointerEvents: 'none',
+  },
+  joinBubble: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors.success,
+  },
+  joinBubbleText: {
+    color: colors.textWhite,
+    fontWeight: '600',
   },
   // Activity Styles
   activityList: {
