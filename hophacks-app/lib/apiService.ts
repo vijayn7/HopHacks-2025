@@ -116,6 +116,51 @@ export async function updateUserEmail(email: string) {
 }
 
 /**
+ * Creates a new event in the database.
+ * @param event Partial event data to insert
+ * @returns Created event record or error
+ */
+export async function createEvent(event: any) {
+  const { data, error } = await supabase
+    .from('events')
+    .insert(event)
+    .select()
+    .single();
+  return { data, error };
+}
+
+/**
+ * Signs the current user into an event using its ID.
+ * @param eventId Event identifier encoded in the QR code
+ * @returns Result of the join insert operation
+ */
+export async function signInToEvent(eventId: string) {
+  const { data, error } = await supabase
+    .from('joins')
+    .insert({ event_id: eventId })
+    .select()
+    .single();
+  return { data, error };
+}
+
+/**
+ * Signs the current user out of an event by updating their join record.
+ * @param eventId Event identifier encoded in the QR code
+ * @returns Result of the join update operation
+ */
+export async function signOutFromEvent(eventId: string) {
+  const userId = await authService.getCurrentUserId();
+  const { data, error } = await supabase
+    .from('joins')
+    .update({ check_out_at: new Date().toISOString(), status: 'completed' })
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+  return { data, error };
+}
+
+/**
  * Creates a join record for the current user on the specified event
  * @param eventId - The UUID of the event to join
  * @returns Result of the join insert operation
