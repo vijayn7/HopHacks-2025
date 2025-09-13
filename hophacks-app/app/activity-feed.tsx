@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -30,7 +31,7 @@ const ActivityFeedScreen = () => {
   const [activities, setActivities] = useState<GroupActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUserActivity, setIsUserActivity] = useState(false);
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
@@ -117,6 +118,10 @@ const ActivityFeedScreen = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar 
+        barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} 
+        backgroundColor={colors.background} 
+      />
       {/* Activity Feed Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {activities.length === 0 ? (
