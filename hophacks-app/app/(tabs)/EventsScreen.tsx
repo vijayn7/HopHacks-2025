@@ -11,6 +11,7 @@ import {
   Platform,
   UIManager,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
@@ -38,6 +39,25 @@ const EventsScreen = () => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
   const screenWidth = Dimensions.get('window').width;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCause, setSelectedCause] = useState<string | null>(null);
+
+  const causes = React.useMemo(
+    () => Array.from(new Set(events.map((e) => e.cause).filter(Boolean))),
+    [events]
+  );
+
+  const filteredEvents = React.useMemo(
+    () =>
+      events.filter((event) => {
+        const matchesSearch =
+          event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (event.description ?? '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCause = !selectedCause || event.cause === selectedCause;
+        return matchesSearch && matchesCause;
+      }),
+    [events, searchQuery, selectedCause]
+  );
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -169,11 +189,52 @@ const EventsScreen = () => {
         <View style={styles.header}>
           <Text style={styles.title}>All Events</Text>
           <Text style={styles.subtitle}>Find volunteering opportunities near you</Text>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search events..."
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+          {causes.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filtersScroll}
+              contentContainerStyle={styles.filtersContainer}
+            >
+              <TouchableOpacity
+                style={[styles.filterChip, !selectedCause && styles.filterChipActive]}
+                onPress={() => setSelectedCause(null)}
+              >
+                <Text style={[styles.filterChipText, !selectedCause && styles.filterChipTextActive]}>All</Text>
+              </TouchableOpacity>
+              {causes.map((cause) => (
+                <TouchableOpacity
+                  key={cause}
+                  style={[styles.filterChip, selectedCause === cause && styles.filterChipActive]}
+                  onPress={() => setSelectedCause(cause)}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      selectedCause === cause && styles.filterChipTextActive,
+                    ]}
+                  >
+                    {cause}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         <View style={styles.eventsContainer}>
-          {events.length > 0 ? (
-            events.map((event) => {
+          {filteredEvents.length > 0 ? (
+            filteredEvents.map((event) => {
               if (!animations.current[event.id]) {
                 animations.current[event.id] = {
                   slide: new Animated.Value(0),
@@ -204,8 +265,14 @@ const EventsScreen = () => {
             })
           ) : (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No events available at the moment</Text>
-              <Text style={styles.emptySubtext}>Check back later for new opportunities!</Text>
+              <Text style={styles.emptyText}>
+                {events.length > 0 ? 'No events match your search' : 'No events available at the moment'}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {events.length > 0
+                  ? 'Try adjusting your search or filters!'
+                  : 'Check back later for new opportunities!'}
+              </Text>
             </View>
           )}
         </View>
@@ -265,6 +332,47 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: colors.textSecondary,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.textPrimary,
+  },
+  filtersScroll: {
+    marginBottom: 8,
+  },
+  filtersContainer: {
+    paddingVertical: 4,
+    paddingRight: 16,
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary,
+  },
+  filterChipText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  filterChipTextActive: {
+    color: colors.textWhite,
   },
   eventsContainer: {
     paddingHorizontal: 16,
