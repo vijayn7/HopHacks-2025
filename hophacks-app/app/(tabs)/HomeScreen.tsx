@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeEventCard from '../../components/Home/HomeEventCard';
 import { getUserInfoById } from '@/lib/apiService';
 import { authService } from '../../lib/authService';
+import SpecificEventPage from '../../components/SpecificEventPage';
 
 const HomeScreen = () => {
   // Mock data - replace with real data later
@@ -20,6 +21,8 @@ const HomeScreen = () => {
     tierProgress: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [eventPageVisible, setEventPageVisible] = useState(false);
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -199,7 +202,18 @@ const HomeScreen = () => {
     return <LoadingScreen />;
   }
 
+  const openEvent = (id: string) => {
+    setSelectedEventId(id);
+    setEventPageVisible(true);
+  };
+
+  const closeEvent = () => {
+    setEventPageVisible(false);
+    setSelectedEventId(null);
+  };
+
   return (
+    <>
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Profile Widget */}
       <View style={styles.profileWidget}>
@@ -249,6 +263,7 @@ const HomeScreen = () => {
             <HomeEventCard
               key={event.id}
               {...event}
+              onPress={() => openEvent(event.id)}
             />
           ))}
         </ScrollView>
@@ -291,6 +306,15 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
     </ScrollView>
+
+    {selectedEventId && (
+      <SpecificEventPage
+        eventId={selectedEventId}
+        visible={eventPageVisible}
+        onClose={closeEvent}
+      />
+    )}
+    </>
   )
 }
 

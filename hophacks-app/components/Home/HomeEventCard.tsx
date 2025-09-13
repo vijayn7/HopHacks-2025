@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
-import EventCallToActionButton from '../EventCallToActionButton';
+// Learn More button will trigger the onPress callback provided by parent
 
 // Interface for HomeScreen event cards (compact, horizontal scrolling)
 export interface HomeEventCardProps {
@@ -19,7 +19,7 @@ export interface HomeEventCardProps {
   org_name?: string;
   distance?: string;
   onPress?: () => void;
-  showJoinButton?: boolean;
+  showLearnMoreButton?: boolean;
 }
 
 const HomeEventCard: React.FC<HomeEventCardProps> = ({
@@ -35,7 +35,7 @@ const HomeEventCard: React.FC<HomeEventCardProps> = ({
   org_name = 'Organization',
   distance = 'Location TBD',
   onPress,
-  showJoinButton = true,
+  showLearnMoreButton = true,
 }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -96,8 +96,10 @@ const HomeEventCard: React.FC<HomeEventCardProps> = ({
         </View>
       </View>
       
-      {showJoinButton && (
-        <EventCallToActionButton eventId={id} />
+      {showLearnMoreButton && (
+        <TouchableOpacity style={styles.learnMoreButton} onPress={onPress} activeOpacity={0.8}>
+          <Text style={styles.learnMoreButtonText}>Learn More</Text>
+        </TouchableOpacity>
       )}
     </TouchableOpacity>
   );
@@ -157,5 +159,17 @@ const createStyles = (colors: ColorScheme) =>
       fontSize: 12,
       color: colors.textSecondary,
       marginLeft: 6,
+    },
+    learnMoreButton: {
+      backgroundColor: colors.primary,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    learnMoreButtonText: {
+      color: colors.textWhite,
+      fontSize: 14,
+      fontWeight: '600',
     },
   });

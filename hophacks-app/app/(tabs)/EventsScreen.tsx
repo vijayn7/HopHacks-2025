@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-nat
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
+import SpecificEventPage from '../../components/SpecificEventPage';
 import { getAllEvents } from '../../lib/apiService';
 
 interface Event extends EventsEventCardProps {
@@ -14,6 +15,8 @@ const EventsScreen = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [eventPageVisible, setEventPageVisible] = useState(false);
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -59,6 +62,16 @@ const EventsScreen = () => {
     }
   };
 
+  const openEvent = (id: string) => {
+    setSelectedEventId(id);
+    setEventPageVisible(true);
+  };
+
+  const closeEvent = () => {
+    setEventPageVisible(false);
+    setSelectedEventId(null);
+  };
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -77,29 +90,40 @@ const EventsScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>All Events</Text>
-        <Text style={styles.subtitle}>Find volunteering opportunities near you</Text>
-      </View>
-      
-      <View style={styles.eventsContainer}>
-        {events.length > 0 ? (
-          events.map((event) => (
-            <View key={event.id} style={styles.eventWrapper}>
-              <EventsEventCard
-                {...event}
-              />
+    <>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title}>All Events</Text>
+          <Text style={styles.subtitle}>Find volunteering opportunities near you</Text>
+        </View>
+
+        <View style={styles.eventsContainer}>
+          {events.length > 0 ? (
+            events.map((event) => (
+              <View key={event.id} style={styles.eventWrapper}>
+                <EventsEventCard
+                  {...event}
+                  onPress={() => openEvent(event.id)}
+                />
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No events available at the moment</Text>
+              <Text style={styles.emptySubtext}>Check back later for new opportunities!</Text>
             </View>
-          ))
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No events available at the moment</Text>
-            <Text style={styles.emptySubtext}>Check back later for new opportunities!</Text>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+          )}
+        </View>
+      </ScrollView>
+
+      {selectedEventId && (
+        <SpecificEventPage
+          eventId={selectedEventId}
+          visible={eventPageVisible}
+          onClose={closeEvent}
+        />
+      )}
+    </>
   );
 };
 

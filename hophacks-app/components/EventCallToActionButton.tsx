@@ -24,13 +24,14 @@ const EventCallToActionButton: React.FC<EventCallToActionButtonProps> = ({
 
   const handleJoin = async () => {
     setJoining(true);
-    const { error } = await joinEvent(eventId);
+    const { data, error } = await joinEvent(eventId);
     setJoining(false);
 
     if (error) {
       Alert.alert('Join Failed', 'Unable to join this event. Please try again later.');
     } else {
       setJoined(true);
+      console.log('User joined event:', eventId, data);
       Alert.alert('Joined', 'You have successfully joined this event.');
     }
   };
