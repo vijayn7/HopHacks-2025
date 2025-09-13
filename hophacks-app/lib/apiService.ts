@@ -46,18 +46,37 @@ export async function getEventById(eventId: string) {
 }
 
 export async function getEventRecommendations() {
-  const { data, error } = await supabase
+  const userId = await authService.getCurrentUserId();
+
+  const { data: joined, error: joinError } = await supabase
+    .from('joins')
+    .select('event_id')
+    .eq('user_id', userId);
+
+  if (joinError) return { data: null, error: joinError };
+
+  const joinedIds = joined?.map((j: any) => j.event_id) || [];
+
+  const query = supabase
     .from('events')
-    .select(`
-      *,
+    .select(
+      `*,
       organizations (
         id,
         name,
         email,
         phone,
         verified
-      )
-    `)
+      )`
+    )
+    .limit(100);
+
+  if (joinedIds.length > 0) {
+    const idList = `(${joinedIds.join(',')})`;
+    query.not('id', 'in', idList);
+  }
+
+  const { data, error } = await query;
   return { data, error };
 }
 
@@ -93,5 +112,74 @@ export async function updateUserProfile(profile: any) {
 
 export async function updateUserEmail(email: string) {
   const { data, error } = await supabase.auth.updateUser({ email });
+  return { data, error };
+}
+
+/**
+ * Creates a join record for the current user on the specified event
+ * @param eventId - The UUID of the event to join
+ * @returns Result of the join insert operation
+ */
+export async function joinEvent(eventId: string) {
+  const { data, error } = await supabase
+    .from('joins')
+    .insert({ event_id: eventId })
+    .select()
+    .single();
+  return { data, error };
+}
+
+/**
+ * Retrieves events that the current user has joined
+ * @returns Joined events with event and organization details
+ */
+export async function getJoinedEvents() {
+  const userId = await authService.getCurrentUserId();
+  const { data, error } = await supabase
+    .from('joins')
+    .select(
+      `event_id, events (*, organizations (name))`
+    )
+    .eq('user_id', userId)
+    .eq('status', 'joined');
+  return { data, error };
+}
+
+/**
+ * Retrieves events the current user has not yet joined
+ * @returns Events with organization details that the user hasn't joined
+ */
+export async function getUnjoinedEvents() {
+  const userId = await authService.getCurrentUserId();
+
+  const { data: joined, error: joinError } = await supabase
+    .from('joins')
+    .select('event_id')
+    .eq('user_id', userId);
+
+  if (joinError) return { data: null, error: joinError };
+
+  const joinedIds = joined?.map((j: any) => j.event_id) || [];
+
+  const query = supabase
+    .from('events')
+    .select(
+      `*,
+      organizations (
+        id,
+        name,
+        email,
+        phone,
+        verified
+      )`
+    )
+    .limit(100);
+
+  if (joinedIds.length > 0) {
+    const idList = `(${joinedIds.join(',')})`;
+    query.not('id', 'in', idList);
+  }
+
+  const { data, error } = await query;
   return { data, error };
 }

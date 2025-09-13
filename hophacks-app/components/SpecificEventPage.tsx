@@ -7,13 +7,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
-  Alert,
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ColorScheme } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 import { getEventById } from '../lib/apiService';
+import EventCallToActionButton from './EventCallToActionButton';
 
 interface EventDetail {
   id: string;
@@ -38,12 +38,14 @@ interface SpecificEventPageProps {
   eventId: string;
   visible: boolean;
   onClose: () => void;
+  onJoinSuccess?: () => void;
 }
 
 const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
   eventId,
   visible,
   onClose,
+  onJoinSuccess,
 }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -103,20 +105,6 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
       return 'Near you';
     }
     return 'Location TBD';
-  };
-
-  const handleJoinEvent = () => {
-    Alert.alert(
-      'Join Event',
-      'Are you sure you want to join this event?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Join', style: 'default', onPress: () => {
-          console.log('Joined event:', event?.title);
-          onClose(); // Close the modal after joining
-        }}
-      ]
-    );
   };
 
   const renderContent = () => {
@@ -245,9 +233,16 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
 
         {/* Sticky Bottom CTA Button */}
         <View style={styles.stickyButtonContainer}>
-          <TouchableOpacity style={styles.joinButton} onPress={handleJoinEvent}>
-            <Text style={styles.joinButtonText}>Join Event</Text>
-          </TouchableOpacity>
+          {event && (
+            <EventCallToActionButton
+              eventId={event.id}
+              style={styles.joinButton}
+              onJoined={() => {
+                onClose();
+                onJoinSuccess && onJoinSuccess();
+              }}
+            />
+          )}
         </View>
       </>
     );
@@ -513,12 +508,6 @@ const getStyles = (colors: ColorScheme) =>
       shadowOpacity: 0.3,
       shadowRadius: 8,
       elevation: 6,
-    },
-    joinButtonText: {
-      color: colors.textWhite,
-      fontSize: 20,
-      fontWeight: 'bold',
-      letterSpacing: 0.5,
     },
   });
 
