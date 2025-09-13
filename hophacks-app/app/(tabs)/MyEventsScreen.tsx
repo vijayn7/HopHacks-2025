@@ -120,7 +120,6 @@ const MyEventsScreen = () => {
           sortedDates.map((date) => (
             <View key={date} style={styles.dateSection}>
               <View style={styles.dateHeader}>
-                <View style={styles.dateDot} />
                 <Text style={styles.dateText}>{formatDateLabel(date)}</Text>
                 <View style={styles.dateLine} />
               </View>
@@ -187,13 +186,6 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-  },
-  dateDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-    marginRight: 8,
   },
   dateText: {
     fontSize: 20,

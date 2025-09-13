@@ -141,7 +141,7 @@ export async function getUnjoinedEvents() {
     .limit(100);
 
   if (joinedIds.length > 0) {
-    const idList = `(${joinedIds.map((id: string) => `'${id}'`).join(',')})`;
+    const idList = `(${joinedIds.join(',')})`;
     query.not('id', 'in', idList);
   }
 
