@@ -1,20 +1,98 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native'
-import React from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HomeEventCard from '../../components/HomeEventCard';
+import { getUserInfoById } from '@/lib/apiService';
+import { authService } from '../../lib/authService';
 
 const HomeScreen = () => {
   // Mock data - replace with real data later
-  const user = {
-    name: "Alex Johnson",
-    streak: 3,
-    totalPoints: 1250,
-    currentTier: "Community Helper",
-    nextTier: "Volunteer Champion",
-    pointsToNextTier: 200,
-    tierProgress: 0.86, // 1250 / 1450 = 0.86
+
+  const [user, setUser] = useState({
+    name: "Alex Johnson", // fallback name
+    streak: 0,
+    totalPoints: 0,
+    currentTier: "New Volunteer",
+    nextTier: "Community Helper",
+    pointsToNextTier: 100,
+    tierProgress: 0,
+  });
+
+  // Helper function to determine tier based on points
+  const getTierInfo = (points: number) => {
+    if (points >= 1000) {
+      return {
+        currentTier: "Volunteer Champion",
+        nextTier: "Community Leader",
+        pointsToNextTier: 0,
+        tierProgress: 1
+      };
+    } else if (points >= 500) {
+      return {
+        currentTier: "Community Helper",
+        nextTier: "Volunteer Champion",
+        pointsToNextTier: 1000 - points,
+        tierProgress: points / 1000
+      };
+    } else if (points >= 100) {
+      return {
+        currentTier: "Active Volunteer",
+        nextTier: "Community Helper",
+        pointsToNextTier: 500 - points,
+        tierProgress: points / 500
+      };
+    } else {
+      return {
+        currentTier: "New Volunteer",
+        nextTier: "Active Volunteer",
+        pointsToNextTier: 100 - points,
+        tierProgress: points / 100
+      };
+    }
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        // Get the current user ID from auth service
+        const userId = await authService.getCurrentUserId();
+        
+        if (!userId) {
+          console.log('No user ID found - user not authenticated');
+          return;
+        }
+
+        console.log('Fetching user data for ID:', userId);
+        const { data, error } = await getUserInfoById(userId);
+        
+        if (error) {
+          console.log('Error fetching user:', error);
+          return;
+        }
+
+        if (data) {
+          console.log('User data received:', data);
+          
+          const tierInfo = getTierInfo(data.total_points || 0);
+          
+          setUser({
+            name: data.display_name || "Volunteer",
+            streak: data.current_streak_weeks || 0,
+            totalPoints: data.total_points || 0,
+            currentTier: tierInfo.currentTier,
+            nextTier: tierInfo.nextTier,
+            pointsToNextTier: tierInfo.pointsToNextTier,
+            tierProgress: tierInfo.tierProgress,
+          });
+        }
+      } catch (error) {
+        console.log('Error in fetchUser:', error);
+      }
+    };
+    
+    fetchUser();
+  }, []);
 
   const suggestedEvents = [
     {
@@ -364,5 +442,36 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     paddingVertical: 12,
+  },
+  // Sign Out Button Styles
+  signOutSection: {
+    marginHorizontal: 16,
+    marginBottom: 24,
+    marginTop: 16,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.error,
+    shadowColor: Colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  signOutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.error,
+    marginLeft: 8,
   },
 });
