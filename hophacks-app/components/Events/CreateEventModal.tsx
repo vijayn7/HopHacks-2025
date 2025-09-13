@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { createEvent } from '../../lib/apiService';
@@ -20,6 +20,12 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({ visible, onClose, o
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [capacity, setCapacity] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [locationName, setLocationName] = useState('');
+  const [address, setAddress] = useState('');
+  const [locationNotes, setLocationNotes] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
 
   const handleCreate = async () => {
     const { error } = await createEvent({
@@ -29,6 +35,12 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({ visible, onClose, o
       starts_at: startsAt,
       ends_at: endsAt,
       capacity: capacity ? parseInt(capacity, 10) : undefined,
+      lat: latitude ? parseFloat(latitude) : undefined,
+      lng: longitude ? parseFloat(longitude) : undefined,
+      image_url: imageUrl || undefined,
+      location_name: locationName || undefined,
+      address: address || undefined,
+      location_notes: locationNotes || undefined,
     });
 
     if (!error) {
@@ -40,6 +52,12 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({ visible, onClose, o
       setStartsAt('');
       setEndsAt('');
       setCapacity('');
+      setLatitude('');
+      setLongitude('');
+      setLocationName('');
+      setAddress('');
+      setLocationNotes('');
+      setImageUrl('');
     }
   };
 
@@ -47,58 +65,104 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({ visible, onClose, o
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         <View style={styles.container}>
-          <Text style={styles.header}>Create Event</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Title"
-            placeholderTextColor={colors.textSecondary}
-            value={title}
-            onChangeText={setTitle}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Description"
-            placeholderTextColor={colors.textSecondary}
-            value={description}
-            onChangeText={setDescription}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Cause"
-            placeholderTextColor={colors.textSecondary}
-            value={cause}
-            onChangeText={setCause}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Starts At (ISO)"
-            placeholderTextColor={colors.textSecondary}
-            value={startsAt}
-            onChangeText={setStartsAt}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Ends At (ISO)"
-            placeholderTextColor={colors.textSecondary}
-            value={endsAt}
-            onChangeText={setEndsAt}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Capacity"
-            placeholderTextColor={colors.textSecondary}
-            value={capacity}
-            onChangeText={setCapacity}
-            keyboardType="numeric"
-          />
-          <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.button} onPress={onClose}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.createButton]} onPress={handleCreate}>
-              <Text style={[styles.buttonText, styles.createButtonText]}>Create</Text>
-            </TouchableOpacity>
-          </View>
+          <ScrollView>
+            <Text style={styles.header}>Create Event</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Title"
+              placeholderTextColor={colors.textSecondary}
+              value={title}
+              onChangeText={setTitle}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Description"
+              placeholderTextColor={colors.textSecondary}
+              value={description}
+              onChangeText={setDescription}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Cause"
+              placeholderTextColor={colors.textSecondary}
+              value={cause}
+              onChangeText={setCause}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Starts At (ISO)"
+              placeholderTextColor={colors.textSecondary}
+              value={startsAt}
+              onChangeText={setStartsAt}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Ends At (ISO)"
+              placeholderTextColor={colors.textSecondary}
+              value={endsAt}
+              onChangeText={setEndsAt}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Capacity"
+              placeholderTextColor={colors.textSecondary}
+              value={capacity}
+              onChangeText={setCapacity}
+              keyboardType="numeric"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Latitude"
+              placeholderTextColor={colors.textSecondary}
+              value={latitude}
+              onChangeText={setLatitude}
+              keyboardType="numeric"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Longitude"
+              placeholderTextColor={colors.textSecondary}
+              value={longitude}
+              onChangeText={setLongitude}
+              keyboardType="numeric"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Location Name"
+              placeholderTextColor={colors.textSecondary}
+              value={locationName}
+              onChangeText={setLocationName}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Address"
+              placeholderTextColor={colors.textSecondary}
+              value={address}
+              onChangeText={setAddress}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Location Notes"
+              placeholderTextColor={colors.textSecondary}
+              value={locationNotes}
+              onChangeText={setLocationNotes}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Image URL"
+              placeholderTextColor={colors.textSecondary}
+              value={imageUrl}
+              onChangeText={setImageUrl}
+            />
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.button} onPress={onClose}>
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.createButton]} onPress={handleCreate}>
+                <Text style={[styles.buttonText, styles.createButtonText]}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -115,7 +179,7 @@ const createStyles = (colors: ColorScheme) =>
     },
     container: {
       width: '90%',
-      backgroundColor: colors.cardBackground,
+      backgroundColor: colors.surface,
       padding: 20,
       borderRadius: 8,
     },

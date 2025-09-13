@@ -198,6 +198,10 @@ export async function createEvent(event: {
   capacity?: number;
   lat?: number;
   lng?: number;
+  image_url?: string;
+  location_name?: string;
+  address?: string;
+  location_notes?: string;
 }) {
   const userId = await authService.getCurrentUserId();
 
