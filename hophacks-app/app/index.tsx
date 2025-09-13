@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, SafeAreaView, ActivityIndicator } from "react-native";
+import { View, StyleSheet, SafeAreaView } from 'react-native';
+import LoadingScreen from '../components/LoadingScreen';
 import { StatusBar } from 'expo-status-bar';
 import CustomTabBar from '../components/CustomTabBar';
 import { useTheme } from '../context/ThemeContext';
@@ -20,19 +21,10 @@ export default function Index() {
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
-    console.log('Initializing app...');
     const initializeApp = async () => {
       try {
-        console.log('Initializing authentication...');
         const authSuccess = await authService.initializeAuth();
         setIsAuthenticated(authSuccess);
-        if (authSuccess) {
-          console.log('App initialized successfully');
-        } else {
-          console.log('No existing session, showing login screen');
-        }
-      } catch (error) {
-        console.log('App initialization error:', error);
       } finally {
         setIsInitializing(false);
       }
@@ -43,7 +35,6 @@ export default function Index() {
 
   const handleTabPress = (tab: string) => {
     setActiveTab(tab);
-    console.log(`Switched to ${tab} tab`);
   };
 
   const renderTabContent = () => {
@@ -64,12 +55,7 @@ export default function Index() {
   };
 
   if (isInitializing) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Initializing app...</Text>
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
@@ -102,18 +88,6 @@ const createStyles = (colors: ColorScheme) =>
     },
     safeArea: {
       flex: 1,
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: colors.background,
-    },
-    loadingText: {
-      marginTop: 16,
-      fontSize: 16,
-      color: colors.textSecondary,
-      fontWeight: '500',
     },
     content: {
       flex: 1,
