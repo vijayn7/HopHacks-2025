@@ -4,6 +4,10 @@ import CustomTabBar from '../components/CustomTabBar';
 import EventsList from '../components/EventsList';
 import { Colors } from '../constants/colors';
 import HomeScreen from './(tabs)/HomeScreen';
+import EventsScreen from './(tabs)/EventsScreen';
+import MyEventsScreen from './(tabs)/MyEventsScreen';
+import GroupsScreen from './(tabs)/GroupsScreen';
+import ProfileScreen from './(tabs)/ProfileScreen';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState('home');
@@ -18,17 +22,13 @@ export default function Index() {
       case 'home':
         return <HomeScreen />;
       case 'events':
-        return (
-          <View style={{ flex: 1, alignSelf: 'stretch', width: '100%' }}>
-            <EventsList />
-          </View>
-        );
+        return <EventsScreen />;
       case 'myEvents':
-        return <Text style={styles.tabContent}>My Events Screen - Coming Soon!</Text>;
+        return <MyEventsScreen />;
       case 'groups':
-        return <Text style={styles.tabContent}>Groups Screen - Coming Soon!</Text>;
+        return <GroupsScreen />;
       case 'profile':
-        return <Text style={styles.tabContent}>Profile Screen - Coming Soon!</Text>;
+        return <ProfileScreen />;
       default:
         return <HomeScreen />;
     }
