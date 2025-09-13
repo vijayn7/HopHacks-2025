@@ -64,8 +64,10 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
             if (result.error) {
               console.log(result.error.message || 'Unable to update attendance');
             } else {
-              console.log(
-                isSignIn ? 'Checked in successfully' : 'Checked out successfully'
+              const eventTitle = result.data?.events?.title || 'event';
+              Alert.alert(
+                'Success',
+                `Successfully signed ${isSignIn ? 'in to' : 'out of'} ${eventTitle}`
               );
               onSuccess && onSuccess();
             }
