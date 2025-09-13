@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import React from 'react'
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import HomeEventCard from '../../components/HomeEventCard';
 
 const HomeScreen = () => {
   // Mock data - replace with real data later
@@ -17,28 +18,43 @@ const HomeScreen = () => {
 
   const suggestedEvents = [
     {
-      id: 1,
-      title: "Food Pantry Packing",
-      organization: "Ann Arbor Food Bank",
-      time: "Today, 2:00 PM",
-      location: "0.5 mi away",
-      cause: "Food Security",
+      id: '1',
+      title: 'Food Pantry Packing',
+      description: 'Help pack and distribute food boxes for families in need during our weekly food distribution event.',
+      cause: 'food_security' as const,
+      starts_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours from now (2 PM today)
+      ends_at: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString(), // 9 hours from now (5 PM today)
+      lat: 42.2808,
+      lng: -83.7430,
+      capacity: 20,
+      org_name: 'Ann Arbor Food Bank',
+      distance: '0.5 mi away',
     },
     {
-      id: 2,
-      title: "Animal Shelter Cleanup",
-      organization: "Humane Society",
-      time: "Tomorrow, 10:00 AM",
-      location: "1.2 mi away",
-      cause: "Animal Welfare",
+      id: '2',
+      title: 'Animal Shelter Cleanup',
+      description: 'Join us for our weekly shelter maintenance and animal care activities. Help make a difference for our furry friends!',
+      cause: 'animal_welfare' as const,
+      starts_at: new Date(Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(), // Tomorrow 10 AM
+      ends_at: new Date(Date.now() + 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000).toISOString(), // Tomorrow 1 PM
+      lat: 42.2925,
+      lng: -83.7351,
+      capacity: 15,
+      org_name: 'Humane Society',
+      distance: '1.2 mi away',
     },
     {
-      id: 3,
-      title: "Community Garden",
-      organization: "Green Thumb Initiative",
-      time: "Saturday, 9:00 AM",
-      location: "0.8 mi away",
-      cause: "Environment",
+      id: '3',
+      title: 'Community Garden',
+      description: 'Help maintain our community garden and learn about sustainable growing practices.',
+      cause: 'environment' as const,
+      starts_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000).toISOString(), // Saturday 9 AM
+      ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000).toISOString(), // Saturday 12 PM
+      lat: 42.2776,
+      lng: -83.7382,
+      capacity: 25,
+      org_name: 'Green Thumb Initiative',
+      distance: '0.8 mi away',
     },
   ];
 
@@ -108,26 +124,10 @@ const HomeScreen = () => {
           style={styles.eventsScrollView}
         >
           {suggestedEvents.map((event) => (
-            <TouchableOpacity key={event.id} style={styles.eventCard}>
-              <View style={styles.eventHeader}>
-                <Text style={styles.eventTitle}>{event.title}</Text>
-                <Text style={styles.eventTime}>{event.time}</Text>
-              </View>
-              <Text style={styles.eventOrganization}>{event.organization}</Text>
-              <View style={styles.eventDetails}>
-                <View style={styles.eventDetailItem}>
-                  <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
-                  <Text style={styles.eventDetailText}>{event.location}</Text>
-                </View>
-                <View style={styles.eventDetailItem}>
-                  <Ionicons name="pricetag-outline" size={14} color={Colors.textSecondary} />
-                  <Text style={styles.eventDetailText}>{event.cause}</Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.joinButton}>
-                <Text style={styles.joinButtonText}>Join Event</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
+            <HomeEventCard
+              key={event.id}
+              {...event}
+            />
           ))}
         </ScrollView>
         {suggestedEvents.length === 0 && (
@@ -303,69 +303,6 @@ const styles = StyleSheet.create({
   eventsScrollView: {
     marginHorizontal: -16,
     paddingHorizontal: 16,
-  },
-  eventCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginRight: 12,
-    width: 280,
-    shadowColor: Colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  eventHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    flex: 1,
-    marginRight: 8,
-  },
-  eventTime: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '500',
-  },
-  eventOrganization: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 12,
-  },
-  eventDetails: {
-    marginBottom: 16,
-  },
-  eventDetailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  eventDetailText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginLeft: 6,
-  },
-  joinButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  joinButtonText: {
-    color: Colors.textWhite,
-    fontSize: 14,
-    fontWeight: '600',
   },
   // Activity Styles
   activityList: {
