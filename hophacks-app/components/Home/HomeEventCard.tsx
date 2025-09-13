@@ -101,7 +101,7 @@ const HomeEventCard: React.FC<HomeEventCardProps> = ({
       </View>
       
       {showJoinButton && (
-        <EventCallToActionButton onPress={handlePress} />
+        <EventCallToActionButton eventId={id} onPress={handlePress} />
       )}
     </TouchableOpacity>
   );

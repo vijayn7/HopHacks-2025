@@ -123,7 +123,7 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
       </View>
       
       {showJoinButton && (
-        <EventCallToActionButton onPress={handlePress} />
+        <EventCallToActionButton eventId={id} onPress={handlePress} />
       )}
     </TouchableOpacity>
   );
