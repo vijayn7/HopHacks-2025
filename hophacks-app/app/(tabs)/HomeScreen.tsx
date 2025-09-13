@@ -343,7 +343,7 @@ const HomeScreen = () => {
             </View>
           ))}
           {recentActivity.length === 0 && (
-            <Text style={styles.noActivityText}>No recent activity. Ready to make a difference?</Text>
+            <Text style={styles.noActivityText}>No activity this month. Ready to make a difference?</Text>
           )}
         </View>
       </View>

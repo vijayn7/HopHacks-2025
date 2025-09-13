@@ -15,7 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
-import { getCurrentUserProfile, updateUserProfile, updateUserEmail } from '../../lib/apiService';
+import { getCurrentUserProfile, updateUserProfile, updateUserEmail, calculateUserTotalPoints, calculateUserWeeklyStreak, calculateUserLongestStreak } from '../../lib/apiService';
 import { authService } from '../../lib/authService';
 
 interface Profile {
@@ -46,6 +46,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
   
+  // Calculated values from points_ledger
+  const [calculatedTotalPoints, setCalculatedTotalPoints] = useState<number>(0);
+  const [calculatedCurrentStreak, setCalculatedCurrentStreak] = useState<number>(0);
+  const [calculatedLongestStreak, setCalculatedLongestStreak] = useState<number>(0);
+  
   // Form fields (these are the working copies during editing)
   const [displayName, setDisplayName] = useState('');
   const [phone, setPhone] = useState('');
@@ -67,9 +72,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
 
   const loadProfile = async () => {
     try {
-      const [profileResult, emailResult] = await Promise.all([
+      const [profileResult, emailResult, totalPointsResult, currentStreakResult, longestStreakResult] = await Promise.all([
         getCurrentUserProfile(),
-        await authService.getCurrentUserEmail()
+        authService.getCurrentUserEmail(),
+        calculateUserTotalPoints(),
+        calculateUserWeeklyStreak(),
+        calculateUserLongestStreak()
       ]);
 
       if (profileResult.error) {
@@ -102,6 +110,17 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
       if (emailResult) {
         setEmail(emailResult);
         setOriginalEmail(emailResult);
+      }
+
+      // Set calculated values from points_ledger
+      if (totalPointsResult.data !== null) {
+        setCalculatedTotalPoints(totalPointsResult.data);
+      }
+      if (currentStreakResult.data !== null) {
+        setCalculatedCurrentStreak(currentStreakResult.data);
+      }
+      if (longestStreakResult.data !== null) {
+        setCalculatedLongestStreak(longestStreakResult.data);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to load profile');
@@ -237,9 +256,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
 
         {/* Stats Section */}
         <View style={styles.statsContainer}>
-          {renderStatCard('Total Points', profile?.total_points || 0)}
-          {renderStatCard('Current Streak', `${profile?.current_streak_weeks || 0} weeks`)}
-          {renderStatCard('Longest Streak', `${profile?.longest_streak || 0} weeks`)}
+          {renderStatCard('Total Points', calculatedTotalPoints)}
+          {renderStatCard('Current Streak', `${calculatedCurrentStreak} weeks`)}
+          {renderStatCard('Longest Streak', `${calculatedLongestStreak} weeks`)}
         </View>
 
         {/* Profile Form */}
