@@ -17,6 +17,7 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
   const [permission, requestPermission] = useCameraPermissions();
   const [mode, setMode] = useState<'in' | 'out'>('in');
   const [scanned, setScanned] = useState(false);
+  const processingRef = useRef(false);
   const highlight = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -36,7 +37,8 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
   }, [mode, highlight]);
 
   const handleBarCodeScanned = ({ data }: BarcodeScanningResult) => {
-    if (scanned) return;
+    if (processingRef.current || scanned) return;
+    processingRef.current = true;
     setScanned(true);
     const eventId = data;
     const isSignIn = mode === 'in';
@@ -48,7 +50,10 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
         {
           text: 'Cancel',
           style: 'cancel',
-          onPress: () => setScanned(false),
+          onPress: () => {
+            setScanned(false);
+            processingRef.current = false;
+          },
         },
         {
           text: 'OK',
@@ -65,6 +70,7 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
               onSuccess && onSuccess();
             }
             onClose();
+            processingRef.current = false;
           },
         },
       ]
