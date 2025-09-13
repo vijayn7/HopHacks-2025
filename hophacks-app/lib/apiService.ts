@@ -42,6 +42,8 @@ export async function getEventById(eventId: string) {
     `)
     .eq('id', eventId)
     .single();
+  return { data, error };
+}
 
 export async function getUserInfoById() {
   const {data, error} = await supabase
