@@ -79,7 +79,13 @@ const HomeEventCard: React.FC<HomeEventCardProps> = ({
       activeOpacity={0.8}
     >
       <View style={styles.eventHeader}>
-        <Text style={styles.eventTitle}>{title}</Text>
+        <Text
+          style={styles.eventTitle}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {title}
+        </Text>
         <Text style={styles.eventTime}>{formatEventTime(starts_at, ends_at)}</Text>
       </View>
       
