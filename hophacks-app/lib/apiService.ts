@@ -183,3 +183,44 @@ export async function getUnjoinedEvents() {
   const { data, error } = await query;
   return { data, error };
 }
+
+/**
+ * Creates a new event for the organization owned by the current user
+ * @param event - Event fields excluding org_id and created_by
+ * @returns Newly created event record or error
+ */
+export async function createEvent(event: {
+  title: string;
+  description?: string;
+  cause: string;
+  starts_at: string;
+  ends_at: string;
+  capacity?: number;
+  lat?: number;
+  lng?: number;
+}) {
+  const userId = await authService.getCurrentUserId();
+
+  const { data: org, error: orgError } = await supabase
+    .from('organizations')
+    .select('id')
+    .eq('owner_user_id', userId)
+    .single();
+
+  if (orgError) {
+    return { data: null, error: orgError };
+  }
+
+  const { data, error } = await supabase
+    .from('events')
+    .insert({
+      org_id: org.id,
+      created_by: userId,
+      ...event,
+    })
+    .select()
+    .single();
+
+  return { data, error };
+}
+

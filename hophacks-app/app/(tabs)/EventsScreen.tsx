@@ -10,12 +10,15 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
 import SpecificEventPage from '../../components/SpecificEventPage';
-import { getUnjoinedEvents } from '../../lib/apiService';
+import { getUnjoinedEvents, getCurrentUserProfile } from '../../lib/apiService';
+import CreateEventModal from '../../components/Events/CreateEventModal';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Event extends EventsEventCardProps {
   org_name: string;
@@ -28,6 +31,8 @@ const EventsScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPageVisible, setEventPageVisible] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(false);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
   const animations = useRef<Record<string, { slide: Animated.Value; bubble: Animated.Value }>>({});
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -41,7 +46,15 @@ const EventsScreen = () => {
 
   useEffect(() => {
     fetchEvents();
+    checkRole();
   }, []);
+
+  const checkRole = async () => {
+    const { data } = await getCurrentUserProfile();
+    if (data?.role === 'organizer') {
+      setIsOrganizer(true);
+    }
+  };
 
   const fetchEvents = async () => {
     try {
@@ -187,6 +200,21 @@ const EventsScreen = () => {
           )}
         </View>
       </ScrollView>
+      {isOrganizer && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setCreateModalVisible(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="add" size={32} color={colors.textWhite} />
+        </TouchableOpacity>
+      )}
+
+      <CreateEventModal
+        visible={createModalVisible}
+        onClose={() => setCreateModalVisible(false)}
+        onCreated={fetchEvents}
+      />
 
       {selectedEventId && (
         <SpecificEventPage
@@ -282,5 +310,21 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });
