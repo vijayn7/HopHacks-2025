@@ -6,11 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import type { ColorScheme } from '../constants/colors';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { getGroupLeaderboard } from '../lib/apiService';
 
 interface GroupMember {
   id: string;
@@ -22,45 +24,49 @@ interface GroupMember {
 }
 
 const LeaderboardScreen = () => {
+  const { groupId } = useLocalSearchParams();
+  const navigation = useNavigation();
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const { colors, theme } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
+  // Set dynamic title
+  useEffect(() => {
+    const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+    navigation.setOptions({ title: `${currentMonth} Leaderboard` });
+  }, [navigation]);
+
   useEffect(() => {
     const loadLeaderboard = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!groupId) {
+          console.error('No group ID provided');
+          Alert.alert('Error', 'No group selected. Please go back and select a group.');
+          return;
+        }
+
+        const { data, error } = await getGroupLeaderboard(groupId as string);
         
-        const mockMembers: GroupMember[] = [
-          { id: '1', name: 'Alex Johnson', points: 5000, rank: 1, isCurrentUser: true },
-          { id: '2', name: 'Sarah Chen', points: 3920, rank: 2 },
-          { id: '3', name: 'Mike Rodriguez', points: 3400, rank: 3 },
-          { id: '4', name: 'Emma Wilson', points: 2880, rank: 4 },
-          { id: '5', name: 'David Kim', points: 2600, rank: 5 },
-          { id: '6', name: 'Lisa Park', points: 2320, rank: 6 },
-          { id: '7', name: 'James Brown', points: 2080, rank: 7 },
-          { id: '8', name: 'Maria Garcia', points: 1920, rank: 8 },
-          { id: '9', name: 'Tom Wilson', points: 1680, rank: 9 },
-          { id: '10', name: 'Anna Lee', points: 1520, rank: 10 },
-          { id: '11', name: 'Chris Taylor', points: 1360, rank: 11 },
-          { id: '12', name: 'Rachel Green', points: 1200, rank: 12 },
-          { id: '13', name: 'Kevin White', points: 1040, rank: 13 },
-          { id: '14', name: 'Sophie Martin', points: 880, rank: 14 },
-          { id: '15', name: 'Ryan Davis', points: 720, rank: 15 },
-        ];
-        
-        setMembers(mockMembers);
+        if (error) {
+          console.error('Error loading leaderboard:', error);
+          Alert.alert('Error', 'Failed to load leaderboard. Please try again.');
+          return;
+        }
+
+        if (data) {
+          setMembers(data);
+        }
       } catch (error) {
         console.error('Error loading leaderboard:', error);
+        Alert.alert('Error', 'Failed to load leaderboard. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     loadLeaderboard();
-  }, []);
+  }, [groupId]);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {

@@ -6,11 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import type { ColorScheme } from '../constants/colors';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { getGroupMembers } from '../lib/apiService';
 
 interface GroupMember {
   id: string;
@@ -25,6 +27,7 @@ interface GroupMember {
 }
 
 const MembersScreen = () => {
+  const { groupId } = useLocalSearchParams();
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [sortedMembers, setSortedMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,158 +37,33 @@ const MembersScreen = () => {
   useEffect(() => {
     const loadMembers = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!groupId) {
+          console.error('No group ID provided');
+          Alert.alert('Error', 'No group selected. Please go back and select a group.');
+          return;
+        }
+
+        const { data, error } = await getGroupMembers(groupId as string);
         
-        const mockMembers: GroupMember[] = [
-          { 
-            id: '1', 
-            name: 'Alex Johnson', 
-            isCurrentUser: true,
-            joinDate: '2024-01-15',
-            totalHours: 180,
-            currentStreak: 12,
-            isAdmin: true,
-            role: 'Group Creator'
-          },
-          { 
-            id: '2', 
-            name: 'Anna Lee', 
-            joinDate: '2024-03-15',
-            totalHours: 56,
-            currentStreak: 3,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '3', 
-            name: 'Chris Taylor', 
-            joinDate: '2024-03-20',
-            totalHours: 48,
-            currentStreak: 7,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '4', 
-            name: 'David Kim', 
-            joinDate: '2024-02-15',
-            totalHours: 100,
-            currentStreak: 5,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '5', 
-            name: 'Emma Wilson', 
-            joinDate: '2024-02-10',
-            totalHours: 112,
-            currentStreak: 8,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '6', 
-            name: 'James Brown', 
-            joinDate: '2024-03-01',
-            totalHours: 80,
-            currentStreak: 2,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '7', 
-            name: 'Kevin White', 
-            joinDate: '2024-04-01',
-            totalHours: 32,
-            currentStreak: 1,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '8', 
-            name: 'Lisa Park', 
-            joinDate: '2024-02-20',
-            totalHours: 88,
-            currentStreak: 4,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '9', 
-            name: 'Maria Garcia', 
-            joinDate: '2024-03-05',
-            totalHours: 72,
-            currentStreak: 6,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '10', 
-            name: 'Mike Rodriguez', 
-            joinDate: '2024-02-01',
-            totalHours: 128,
-            currentStreak: 9,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '11', 
-            name: 'Rachel Green', 
-            joinDate: '2024-03-25',
-            totalHours: 40,
-            currentStreak: 0,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '12', 
-            name: 'Ryan Davis', 
-            joinDate: '2024-04-10',
-            totalHours: 16,
-            currentStreak: 1,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '13', 
-            name: 'Sarah Chen', 
-            joinDate: '2024-01-20',
-            totalHours: 152,
-            currentStreak: 11,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '14', 
-            name: 'Sophie Martin', 
-            joinDate: '2024-04-05',
-            totalHours: 24,
-            currentStreak: 2,
-            isAdmin: false,
-            role: 'Member'
-          },
-          { 
-            id: '15', 
-            name: 'Tom Wilson', 
-            joinDate: '2024-03-10',
-            totalHours: 64,
-            currentStreak: 3,
-            isAdmin: false,
-            role: 'Member'
-          },
-        ];
-        
-        setMembers(mockMembers);
+        if (error) {
+          console.error('Error loading members:', error);
+          Alert.alert('Error', 'Failed to load members. Please try again.');
+          return;
+        }
+
+        if (data) {
+          setMembers(data);
+        }
       } catch (error) {
         console.error('Error loading members:', error);
+        Alert.alert('Error', 'Failed to load members. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     loadMembers();
-  }, []);
+  }, [groupId]);
 
   // Sort members: admin first, then alphabetically
   useEffect(() => {
