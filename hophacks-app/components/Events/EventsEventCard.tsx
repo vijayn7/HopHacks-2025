@@ -20,6 +20,7 @@ export interface EventsEventCardProps {
   distance?: string;
   onPress?: () => void;
   showLearnMoreButton?: boolean;
+  isOwner?: boolean;
 }
 
 const EventsEventCard: React.FC<EventsEventCardProps> = ({
@@ -36,6 +37,7 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
   distance = 'Location TBD',
   onPress,
   showLearnMoreButton = true,
+  isOwner = false,
 }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -73,11 +75,16 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
   };
 
   return (
-    <TouchableOpacity 
-      style={styles.eventCard} 
+    <TouchableOpacity
+      style={styles.eventCard}
       onPress={onPress}
       activeOpacity={0.8}
     >
+      {isOwner && (
+        <View style={styles.ownerBadge}>
+          <Text style={styles.ownerBadgeText}>Owner</Text>
+        </View>
+      )}
       <View style={styles.eventHeader}>
         {/* Event Image Placeholder */}
         <View style={styles.eventImageContainer}>
@@ -144,6 +151,20 @@ const createStyles = (colors: ColorScheme) =>
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 3,
+    },
+    ownerBadge: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      backgroundColor: colors.primary,
+      paddingVertical: 2,
+      paddingHorizontal: 6,
+      borderRadius: 4,
+    },
+    ownerBadgeText: {
+      color: colors.textWhite,
+      fontSize: 10,
+      fontWeight: '600',
     },
     eventHeader: {
       flexDirection: 'row',

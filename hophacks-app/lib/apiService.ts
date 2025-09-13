@@ -226,3 +226,49 @@ export async function getUnjoinedEvents() {
   const { data, error } = await query;
   return { data, error };
 }
+
+/**
+ * Creates a new event associated with the current organizer's organization
+ * @param event - Event fields excluding org_id and created_by
+ * @returns Newly created event record or error
+ */
+export async function createEvent(event: {
+  title: string;
+  description?: string;
+  cause: string;
+  starts_at: string;
+  ends_at: string;
+  capacity?: number;
+  lat?: number;
+  lng?: number;
+  image_url?: string;
+  location_name?: string;
+  address?: string;
+  location_notes?: string;
+}) {
+  const userId = await authService.getCurrentUserId();
+
+  // Lookup organization membership for the current user
+  const { data: membership, error: membershipError } = await supabase
+    .from('org_members')
+    .select('org_id')
+    .eq('user_id', userId)
+    .single();
+
+  if (membershipError) {
+    return { data: null, error: membershipError };
+  }
+
+  const { data, error } = await supabase
+    .from('events')
+    .insert({
+      org_id: membership.org_id,
+      created_by: userId,
+      ...event,
+    })
+    .select()
+    .single();
+
+  return { data, error };
+}
+

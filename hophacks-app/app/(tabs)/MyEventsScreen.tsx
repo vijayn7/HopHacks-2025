@@ -5,7 +5,7 @@ import type { ColorScheme } from '../../constants/colors';
 import MyEventsEventCard, { MyEventsEventCardProps } from '../../components/MyEvents/MyEventsEventCard';
 import QRScannerModal from '../../components/Events/QRScannerModal';
 import SpecificEventPage from '../../components/SpecificEventPage';
-import { getJoinedEvents } from '../../lib/apiService';
+import { getJoinedEvents, getCurrentUserProfile } from '../../lib/apiService';
 
 interface JoinedEvent extends MyEventsEventCardProps {
   org_name: string;
@@ -23,13 +23,22 @@ const MyEventsScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPageVisible, setEventPageVisible] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [scannerVisible, setScannerVisible] = useState(false);
 
   useEffect(() => {
-    fetchJoinedEvents();
+    init();
   }, []);
 
-  const fetchJoinedEvents = async () => {
+  const init = async () => {
+    const { data } = await getCurrentUserProfile();
+    if (data) {
+      setCurrentUserId(data.id);
+    }
+    fetchJoinedEvents(data?.id);
+  };
+
+  const fetchJoinedEvents = async (userId?: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -59,6 +68,9 @@ const MyEventsScreen = () => {
             capacity: event.capacity,
             org_name: event.organizations?.name || 'Unknown Organization',
             distance: event.lat && event.lng ? 'Near you' : 'Location TBD',
+            onPress: undefined,
+            showLearnMoreButton: false,
+            isOwner: userId ? event.created_by === userId : false,
             checkInTime: join.check_in_at,
             checkOutTime: join.check_out_at,
           };
