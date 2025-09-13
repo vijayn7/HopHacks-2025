@@ -11,7 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../constants/colors';
+import { lightColors as colors } from '../constants/colors';
 import { getEventById } from '../lib/apiService';
 
 interface EventDetail {
@@ -120,7 +120,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading event details...</Text>
         </View>
       );
@@ -129,7 +129,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
     if (error || !event) {
       return (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={Colors.textSecondary} />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.textSecondary} />
           <Text style={styles.errorText}>{error || 'Event not found'}</Text>
           <TouchableOpacity style={styles.backButton} onPress={onClose}>
             <Text style={styles.backButtonText}>Go Back</Text>
@@ -145,7 +145,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
           {/* Event Image Banner */}
           <View style={styles.bannerContainer}>
             <View style={styles.imagePlaceholder}>
-              <Ionicons name="calendar" size={56} color={Colors.primary} style={styles.placeholderIcon} />
+              <Ionicons name="calendar" size={56} color={colors.primary} style={styles.placeholderIcon} />
               <Text style={styles.placeholderText}>Event Image</Text>
             </View>
             
@@ -177,7 +177,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
             <Text style={styles.organizationName}>
               {event.organizations?.name || 'Organization'}
               {event.organizations?.verified && (
-                <Ionicons name="checkmark-circle" size={16} color={Colors.primary} style={styles.verifiedIcon} />
+                <Ionicons name="checkmark-circle" size={16} color={colors.primary} style={styles.verifiedIcon} />
               )}
             </Text>
           </View>
@@ -185,7 +185,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
           {/* Key Event Details */}
           <View style={styles.detailsCard}>
             <View style={styles.detailRow}>
-              <Ionicons name="location" size={24} color={Colors.primary} style={styles.detailIcon} />
+              <Ionicons name="location" size={24} color={colors.primary} style={styles.detailIcon} />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Location</Text>
                 <Text style={styles.detailValue}>{getLocationText()}</Text>
@@ -195,7 +195,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
             <View style={styles.detailDivider} />
 
             <View style={styles.detailRow}>
-              <Ionicons name="pricetag" size={24} color={Colors.primary} style={styles.detailIcon} />
+              <Ionicons name="pricetag" size={24} color={colors.primary} style={styles.detailIcon} />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Category</Text>
                 <Text style={styles.detailValue}>{formatCause(event.cause)}</Text>
@@ -206,7 +206,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
               <>
                 <View style={styles.detailDivider} />
                 <View style={styles.detailRow}>
-                  <Ionicons name="people" size={24} color={Colors.primary} style={styles.detailIcon} />
+                  <Ionicons name="people" size={24} color={colors.primary} style={styles.detailIcon} />
                   <View style={styles.detailContent}>
                     <Text style={styles.detailLabel}>Capacity</Text>
                     <Text style={styles.detailValue}>Cap: {event.capacity} people</Text>
@@ -218,7 +218,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
             <View style={styles.detailDivider} />
 
             <View style={styles.detailRow}>
-              <Ionicons name="time" size={24} color={Colors.primary} style={styles.detailIcon} />
+              <Ionicons name="time" size={24} color={colors.primary} style={styles.detailIcon} />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Date & Time</Text>
                 <Text style={styles.detailValue}>{formatEventTime(event.starts_at, event.ends_at)}</Text>
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
@@ -290,18 +290,18 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: 16,
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   errorBackButton: {
     marginTop: 20,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 8,
   },
   backButtonText: {
-    color: Colors.textWhite,
+    color: colors.textWhite,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 16,
     fontWeight: '500',
-    color: Colors.primary,
+    color: colors.primary,
     opacity: 0.8,
   },
   navButton: {
@@ -363,12 +363,12 @@ const styles = StyleSheet.create({
     paddingBottom: 120, // Space for sticky button
   },
   mainInfoCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: 20,
     marginTop: -16,
     borderRadius: 20,
     padding: 24,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 8,
@@ -381,13 +381,13 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 8,
     lineHeight: 34,
   },
   organizationName: {
     fontSize: 18,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
     flexDirection: 'row',
     alignItems: 'center',
@@ -396,12 +396,12 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   detailsCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: 20,
     marginTop: 20,
     borderRadius: 20,
     padding: 24,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
     marginBottom: 4,
     textTransform: 'uppercase',
@@ -433,23 +433,23 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 17,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '600',
     lineHeight: 22,
   },
   detailDivider: {
     height: 1,
-    backgroundColor: Colors.border || '#E5E5E5',
+    backgroundColor: colors.border || '#E5E5E5',
     marginVertical: 4,
     marginLeft: 40, // Align with content, not icons
   },
   descriptionCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: 20,
     marginTop: 20,
     borderRadius: 20,
     padding: 24,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -462,16 +462,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 2,
-    borderBottomColor: Colors.primary,
+    borderBottomColor: colors.primary,
   },
   descriptionHeading: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   descriptionText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 24,
     fontWeight: '400',
   },
@@ -483,11 +483,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 40, // Safe area for iOS home bar
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: -4,
@@ -497,11 +497,11 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   joinButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: 18,
     borderRadius: 16,
     alignItems: 'center',
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   joinButtonText: {
-    color: Colors.textWhite,
+    color: colors.textWhite,
     fontSize: 20,
     fontWeight: 'bold',
     letterSpacing: 0.5,

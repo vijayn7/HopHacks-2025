@@ -11,8 +11,10 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from 'react-native';
-import { Colors } from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
+import type { ColorScheme } from '../../constants/colors';
 import { getCurrentUserProfile, updateUserProfile, updateUserEmail } from '../../lib/apiService';
 import { authService } from '../../lib/authService';
 
@@ -37,6 +39,8 @@ const ProfileScreen = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const { colors, theme, toggleTheme } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   
   // Form fields (these are the working copies during editing)
   const [displayName, setDisplayName] = useState('');
@@ -173,7 +177,7 @@ const ProfileScreen = () => {
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading profile...</Text>
       </View>
     );
@@ -210,6 +214,14 @@ const ProfileScreen = () => {
           {renderStatCard('Total Points', profile?.total_points || 0)}
           {renderStatCard('Current Streak', `${profile?.current_streak_weeks || 0} weeks`)}
           {renderStatCard('Longest Streak', `${profile?.longest_streak || 0} weeks`)}
+        </View>
+
+        {/* Theme Section */}
+        <View style={styles.formContainer}>
+          <View style={styles.themeRow}>
+            <Text style={styles.inputLabel}>Dark Mode</Text>
+            <Switch value={theme === 'dark'} onValueChange={toggleTheme} />
+          </View>
         </View>
 
         {/* Profile Form */}
@@ -295,7 +307,7 @@ const ProfileScreen = () => {
               disabled={saving}
             >
               {saving ? (
-                <ActivityIndicator color={Colors.textWhite} />
+                <ActivityIndicator color={colors.textWhite} />
               ) : (
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               )}
@@ -309,10 +321,10 @@ const ProfileScreen = () => {
 
 export default ProfileScreen;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   centered: {
     justifyContent: 'center',
@@ -324,15 +336,15 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   headerInfo: {
     flex: 1,
@@ -340,33 +352,33 @@ const styles = StyleSheet.create({
   displayName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   role: {
     fontSize: 16,
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: 4,
     textTransform: 'capitalize',
   },
   memberSince: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   editButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   editButtonText: {
-    color: Colors.textWhite,
+    color: colors.textWhite,
     fontSize: 14,
     fontWeight: '600',
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginTop: 1,
     paddingVertical: 20,
   },
@@ -378,23 +390,23 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   formContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginTop: 1,
     padding: 20,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 20,
     marginTop: 16,
   },
@@ -404,22 +416,22 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: Colors.textPrimary,
-    backgroundColor: Colors.surface,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   inputDisabled: {
-    backgroundColor: Colors.surfaceSecondary,
-    color: Colors.textSecondary,
+    backgroundColor: colors.surfaceSecondary,
+    color: colors.textSecondary,
   },
   textArea: {
     minHeight: 80,
@@ -427,11 +439,11 @@ const styles = StyleSheet.create({
   },
   inputHint: {
     fontSize: 12,
-    color: Colors.textLight,
+    color: colors.textLight,
     marginTop: 4,
   },
   saveButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 8,
     paddingVertical: 16,
     marginTop: 24,
@@ -441,8 +453,14 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveButtonText: {
-    color: Colors.textWhite,
+    color: colors.textWhite,
     fontSize: 16,
     fontWeight: '600',
+  },
+  themeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
 });
