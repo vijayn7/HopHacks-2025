@@ -1,6 +1,9 @@
-import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { Colors } from '../constants/colors';
+import { getAllEvents } from '../lib/apiService';
+
 
 interface Event {
   id: string;
@@ -19,57 +22,6 @@ interface Event {
   created_at: string;
 }
 
-const events: Event[] = [
-  {
-    id: '1',
-    org_id: 'org1',
-    title: 'Community Cleanup',
-    cause: 'environment',
-    description: 'Join us to clean up the local park and make our neighborhood greener.',
-    starts_at: '2025-03-01T09:00:00Z',
-    ends_at: '2025-03-01T12:00:00Z',
-    lat: 39.2904,
-    lng: -76.6122,
-    capacity: 50,
-    qr_secret: '1111-2222-3333-4444',
-    created_by: 'user1',
-    is_published: true,
-    created_at: '2025-02-01T10:00:00Z',
-  },
-  {
-    id: '2',
-    org_id: 'org2',
-    title: 'Food Drive',
-    cause: 'foodSecurity',
-    description: 'Help distribute food to families in need at the community center.',
-    starts_at: '2025-03-05T14:00:00Z',
-    ends_at: '2025-03-05T17:00:00Z',
-    lat: 39.3000,
-    lng: -76.6100,
-    capacity: 30,
-    qr_secret: '5555-6666-7777-8888',
-    created_by: 'user2',
-    is_published: true,
-    created_at: '2025-02-10T15:30:00Z',
-  },
-  {
-    id: '3',
-    org_id: 'org3',
-    title: 'Senior Tech Workshop',
-    cause: 'education',
-    description: 'Teach basic smartphone skills to seniors at the local library.',
-    starts_at: '2025-03-10T10:00:00Z',
-    ends_at: '2025-03-10T13:00:00Z',
-    lat: 39.2800,
-    lng: -76.6200,
-    capacity: 20,
-    qr_secret: '9999-0000-aaaa-bbbb',
-    created_by: 'user3',
-    is_published: false,
-    created_at: '2025-02-15T09:45:00Z',
-  },
-];
-
 const EventCard: React.FC<{ event: Event }> = ({ event }) => {
   const start = new Date(event.starts_at);
   const end = new Date(event.ends_at);
@@ -87,7 +39,44 @@ const EventCard: React.FC<{ event: Event }> = ({ event }) => {
   );
 };
 
+
 const EventsList: React.FC = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      setError(null);
+      const { data, error } = await getAllEvents();
+      if (error) {
+        setError('Failed to load events.');
+        setEvents([]);
+      } else {
+        setEvents(data || []);
+      }
+      setLoading(false);
+    };
+    fetchEvents();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: 'red' }}>{error}</Text>
+      </View>
+    );
+  }
+
   return (
     <FlatList
       data={events}
