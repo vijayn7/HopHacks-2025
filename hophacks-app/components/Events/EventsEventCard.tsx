@@ -68,14 +68,6 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
     return distance;
   };
 
-  const handlePress = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      console.log(`Joining event: ${title}`);
-    }
-  };
-
   return (
     <TouchableOpacity 
       style={styles.eventCard} 
@@ -123,7 +115,7 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
       </View>
       
       {showJoinButton && (
-        <EventCallToActionButton eventId={id} onPress={handlePress} />
+        <EventCallToActionButton eventId={id} />
       )}
     </TouchableOpacity>
   );

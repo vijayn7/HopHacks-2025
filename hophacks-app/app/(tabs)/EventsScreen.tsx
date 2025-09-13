@@ -56,11 +56,6 @@ const EventsScreen = () => {
     }
   };
 
-  const handleEventPress = (eventId: string) => {
-    console.log('Event pressed:', eventId);
-    // TODO: Navigate to event details screen
-  };
-
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -91,7 +86,6 @@ const EventsScreen = () => {
             <View key={event.id} style={styles.eventWrapper}>
               <EventsEventCard
                 {...event}
-                onPress={() => handleEventPress(event.id)}
               />
             </View>
           ))
