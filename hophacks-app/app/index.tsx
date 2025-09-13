@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Text, View, StyleSheet, SafeAreaView } from "react-native";
 import CustomTabBar from '../components/CustomTabBar';
+import EventsList from '../components/EventsList';
 import { Colors } from '../constants/colors';
 
 export default function Index() {
@@ -16,7 +17,11 @@ export default function Index() {
       case 'home':
         return <Text style={styles.tabContent}>Home Screen - Coming Soon!</Text>;
       case 'events':
-        return <Text style={styles.tabContent}>Events Screen - Coming Soon!</Text>;
+        return (
+          <View style={{ flex: 1, alignSelf: 'stretch', width: '100%' }}>
+            <EventsList />
+          </View>
+        );
       case 'myEvents':
         return <Text style={styles.tabContent}>My Events Screen - Coming Soon!</Text>;
       case 'groups':
