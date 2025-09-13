@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,15 +18,23 @@ const HomeScreen = () => {
     pointsToNextTier: 100,
     tierProgress: 0,
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   // Helper function to determine tier based on points
   const getTierInfo = (points: number) => {
-    if (points >= 1000) {
+    if (points >= 2000) {
       return {
-        currentTier: "Volunteer Champion",
-        nextTier: "Community Leader",
+        currentTier: "Volunteer Legend",
+        nextTier: "Max Tier Reached",
         pointsToNextTier: 0,
         tierProgress: 1
+      };
+    } else if (points >= 1000) {
+      return {
+        currentTier: "Volunteer Champion",
+        nextTier: "Volunteer Legend",
+        pointsToNextTier: 2000 - points,
+        tierProgress: points / 2000
       };
     } else if (points >= 500) {
       return {
@@ -55,24 +63,17 @@ const HomeScreen = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Get the current user ID from auth service
-        const userId = await authService.getCurrentUserId();
-        
-        if (!userId) {
-          console.log('No user ID found - user not authenticated');
-          return;
-        }
+        setIsLoading(true);
 
-        console.log('Fetching user data for ID:', userId);
-        const { data, error } = await getUserInfoById(userId);
+        const { data, error } = await getUserInfoById();
         
         if (error) {
           console.log('Error fetching user:', error);
+          setIsLoading(false);
           return;
         }
 
         if (data) {
-          console.log('User data received:', data);
           
           const tierInfo = getTierInfo(data.total_points || 0);
           
@@ -88,11 +89,39 @@ const HomeScreen = () => {
         }
       } catch (error) {
         console.log('Error in fetchUser:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
     fetchUser();
   }, []);
+
+  const handleSignOut = async () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await authService.signOut();
+              console.log('User signed out successfully');
+              // You could add navigation logic here if needed
+            } catch (error) {
+              console.log('Error signing out:', error);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const suggestedEvents = [
     {
@@ -154,6 +183,18 @@ const HomeScreen = () => {
       hours: 2,
     },
   ];
+
+  // Loading screen component
+  const LoadingScreen = () => (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color={Colors.primary} />
+      <Text style={styles.loadingText}>Loading your profile...</Text>
+    </View>
+  );
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -238,6 +279,14 @@ const HomeScreen = () => {
           )}
         </View>
       </View>
+
+      {/* Sign Out Button - For Testing */}
+      <View style={styles.signOutSection}>
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+          <Ionicons name="log-out-outline" size={20} color={Colors.error} />
+          <Text style={styles.signOutText}>Sign Out (Testing)</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   )
 }
@@ -248,6 +297,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  // Loading Screen Styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   // Profile Widget Styles
   profileWidget: {

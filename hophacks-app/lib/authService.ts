@@ -60,6 +60,16 @@ export class AuthService {
     }
   }
 
+  async getCurrentUserEmail(): Promise<string | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user?.email || null;
+    } catch (error) {
+      console.log('Error getting current user email:', error);
+      return null;
+    }
+  }
+
   async signOut(): Promise<void> {
     console.log('Signing out...');
     await supabase.auth.signOut();
