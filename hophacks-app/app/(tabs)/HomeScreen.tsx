@@ -279,7 +279,7 @@ const HomeScreen = () => {
           showsHorizontalScrollIndicator={false}
           style={styles.eventsScrollView}
         >
-          {suggestedEvents.map((event) => {
+          {suggestedEvents.slice(0, 3).map((event) => {
             if (!animations.current[event.id]) {
               animations.current[event.id] = {
                 slide: new Animated.Value(0),
@@ -343,7 +343,7 @@ const HomeScreen = () => {
             </View>
           ))}
           {recentActivity.length === 0 && (
-            <Text style={styles.noActivityText}>No recent activity. Ready to make a difference?</Text>
+            <Text style={styles.noActivityText}>No activity this month. Ready to make a difference?</Text>
           )}
         </View>
       </View>

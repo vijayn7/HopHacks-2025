@@ -1073,6 +1073,88 @@ function isSameWeek(date1: Date, date2: Date): boolean {
 }
 
 /**
+ * Calculates the longest weekly streak for the current user from points_ledger
+ * @returns {Promise<{ data: number | null, error: any }>} Longest weekly streak or error
+ */
+export async function calculateUserLongestStreak() {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    // Get all points_ledger entries for the user, ordered by date
+    const { data, error } = await supabase
+      .from('points_ledger')
+      .select('created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    if (!data || data.length === 0) {
+      return { data: 0, error: null };
+    }
+
+    // Group entries by week (Monday to Sunday)
+    const weeklyEntries = new Map<string, Date[]>();
+    
+    data.forEach(entry => {
+      const date = new Date(entry.created_at);
+      const weekStart = getWeekStart(date);
+      const weekKey = weekStart.toISOString().split('T')[0];
+      
+      if (!weeklyEntries.has(weekKey)) {
+        weeklyEntries.set(weekKey, []);
+      }
+      weeklyEntries.get(weekKey)!.push(date);
+    });
+
+    // Convert to array and sort by week start date (most recent first)
+    const weeks = Array.from(weeklyEntries.entries())
+      .map(([weekKey, dates]) => ({
+        weekStart: new Date(weekKey),
+        dates: dates.sort((a, b) => b.getTime() - a.getTime())
+      }))
+      .sort((a, b) => b.weekStart.getTime() - a.weekStart.getTime());
+
+    // Calculate all possible streaks and find the longest
+    let longestStreak = 0;
+    let currentStreak = 0;
+    
+    for (let i = 0; i < weeks.length; i++) {
+      const week = weeks[i];
+      
+      if (i === 0) {
+        // First week starts a streak
+        currentStreak = 1;
+      } else {
+        const expectedWeekStart = new Date(week.weekStart);
+        expectedWeekStart.setDate(expectedWeekStart.getDate() + 7);
+        
+        // Check if this week is consecutive with the previous week
+        if (isSameWeek(week.weekStart, expectedWeekStart)) {
+          currentStreak++;
+        } else {
+          // Streak broken, update longest and reset current
+          longestStreak = Math.max(longestStreak, currentStreak);
+          currentStreak = 1;
+        }
+      }
+    }
+    
+    // Don't forget to check the final streak
+    longestStreak = Math.max(longestStreak, currentStreak);
+
+    return { data: longestStreak, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+/**
  * Gets all activity for the current user from their entire history
  * @returns {Promise<{ data: any[] | null, error: any }>} All activity data or error
  */
@@ -1340,7 +1422,7 @@ export async function checkOutFromEvent(eventId: string) {
     .select('id, check_in_at, check_out_at, events(starts_at, ends_at, title)')
     .single();
 
-  if (error || !data) return { data: null, points: 0, error };
+  if (error || !data) return { data: null, error };
 
   // Calculate attendance duration in minutes
   const checkIn = data.check_in_at ? new Date(data.check_in_at) : null;
@@ -1387,7 +1469,7 @@ export async function checkOutFromEvent(eventId: string) {
       .eq('id', userId);
   }
 
-  return { data, points, error: null };
+  return { data, error: null };
 }
 
 /**

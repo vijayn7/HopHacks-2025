@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, Alert } from 'react-native';
 // eslint-disable-next-line import/no-unresolved
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import { useTheme } from '../../context/ThemeContext';
@@ -44,23 +44,40 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
     const eventId = data;
     const isSignIn = mode === 'in';
 
-    const result = isSignIn ? await checkInToEvent(eventId) : await checkOutFromEvent(eventId);
-    if (result.error) {
-      console.log(result.error.message || 'Unable to update attendance');
-    } else {
-      const eventsData: any = Array.isArray(result.data?.events)
-        ? result.data?.events[0]
-        : result.data?.events;
-      const eventTitle = eventsData?.title || 'event';
-      const points = result.points ?? 0;
-      onSuccess &&
-        onSuccess(
-          `Successfully signed ${isSignIn ? 'in to' : 'out of'} ${eventTitle}. ${points} points awarded.`
-        );
-    }
-    processingRef.current = false;
-    setScanned(false);
-    onClose();
+    Alert.alert(
+      `Confirm ${isSignIn ? 'Sign In' : 'Sign Out'}`,
+      `Do you want to ${isSignIn ? 'sign in to' : 'sign out of'} this event?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => {
+            setScanned(false);
+            processingRef.current = false;
+          },
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            const result = isSignIn
+              ? await checkInToEvent(eventId)
+              : await checkOutFromEvent(eventId);
+            if (result.error) {
+              console.log(result.error.message || 'Unable to update attendance');
+            } else {
+              const eventTitle = result.data?.events?.[0]?.title || 'event';
+              Alert.alert(
+                'Success',
+                `Successfully signed ${isSignIn ? 'in to' : 'out of'} ${eventTitle}`
+              );
+              onSuccess && onSuccess(`Successfully signed ${isSignIn ? 'in to' : 'out of'} ${eventTitle}`);
+            }
+            onClose();
+            processingRef.current = false;
+          },
+        },
+      ]
+    );
   };
 
   if (!permission) return null;

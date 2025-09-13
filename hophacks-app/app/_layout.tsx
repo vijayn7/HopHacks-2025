@@ -1,20 +1,24 @@
 import { Stack } from "expo-router";
 import { ThemeProvider } from "../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
+import { useColorScheme } from 'react-native';
 
-export default function RootLayout() {
+function ThemedStack() {
+  const { colors } = useTheme();
+  
   return (
-    <ThemeProvider>
-      <Stack
-        screenOptions={{
-          headerTintColor: '#FF6B35', // Orange color for back buttons
-          headerStyle: {
-            backgroundColor: '#FFFFFF',
-          },
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      >
+    <Stack
+      screenOptions={{
+        headerTintColor: '#FF6B35', // Orange color for back buttons
+        headerStyle: {
+          backgroundColor: colors.surface,
+        },
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          color: colors.textPrimary,
+        },
+      }}
+    >
         <Stack.Screen
           name="index"
           options={{ headerShown: false }}
@@ -55,6 +59,13 @@ export default function RootLayout() {
           }}
         />
       </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <ThemedStack />
     </ThemeProvider>
   );
 }
