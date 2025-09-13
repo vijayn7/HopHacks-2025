@@ -37,7 +37,7 @@ const HomeScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
     const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
     const [eventPageVisible, setEventPageVisible] = useState(false);
-    const animations = useRef<Record<string, Animated.Value>>({});
+    const animations = useRef<Record<string, { slide: Animated.Value; bubble: Animated.Value }>>({});
     const { colors } = useTheme();
     const styles = React.useMemo(() => createStyles(colors), [colors]);
     const screenWidth = Dimensions.get('window').width;
@@ -245,18 +245,31 @@ const HomeScreen = () => {
 
   const handleEventJoined = (id: string) => {
     if (!animations.current[id]) {
-      animations.current[id] = new Animated.Value(0);
+      animations.current[id] = {
+        slide: new Animated.Value(0),
+        bubble: new Animated.Value(0),
+      };
     }
-    const anim = animations.current[id];
-    Animated.timing(anim, {
+    const { slide, bubble } = animations.current[id];
+
+    Animated.timing(slide, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
-    }).start(() => {
+    }).start();
+
+    bubble.setValue(1);
+    Animated.sequence([
+      Animated.delay(1000),
+      Animated.timing(bubble, { toValue: 0, duration: 100, useNativeDriver: true }),
+      Animated.timing(bubble, { toValue: 1, duration: 100, useNativeDriver: true }),
+      Animated.timing(bubble, { toValue: 0, duration: 100, useNativeDriver: true }),
+    ]).start(() => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setSuggestedEvents((prev) => prev.filter((e) => e.id !== id));
       delete animations.current[id];
     });
+
     closeEvent();
   };
 
@@ -309,21 +322,29 @@ const HomeScreen = () => {
         >
           {suggestedEvents.map((event) => {
             if (!animations.current[event.id]) {
-              animations.current[event.id] = new Animated.Value(0);
+              animations.current[event.id] = {
+                slide: new Animated.Value(0),
+                bubble: new Animated.Value(0),
+              };
             }
-            const anim = animations.current[event.id];
-            const translateX = anim.interpolate({
+            const { slide, bubble } = animations.current[event.id];
+            const translateX = slide.interpolate({
               inputRange: [0, 1],
               outputRange: [0, screenWidth],
             });
-            const opacity = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+            const opacity = slide.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
             return (
-              <Animated.View key={event.id} style={{ transform: [{ translateX }], opacity }}>
-                <HomeEventCard
-                  {...event}
-                  onPress={() => openEvent(event.id)}
-                />
-              </Animated.View>
+              <View key={event.id} style={styles.suggestedEventWrapper}>
+                <Animated.View style={[styles.joinBubbleContainer, { opacity: bubble }]}> 
+                  <View style={styles.joinBubble} />
+                </Animated.View>
+                <Animated.View style={{ transform: [{ translateX }], opacity }}>
+                  <HomeEventCard
+                    {...event}
+                    onPress={() => openEvent(event.id)}
+                  />
+                </Animated.View>
+              </View>
             );
           })}
         </ScrollView>
@@ -531,6 +552,25 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   eventsScrollView: {
     marginHorizontal: -16,
     paddingHorizontal: 16,
+  },
+  suggestedEventWrapper: {
+    position: 'relative',
+  },
+  joinBubbleContainer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    pointerEvents: 'none',
+  },
+  joinBubble: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.success,
   },
   // Activity Styles
   activityList: {

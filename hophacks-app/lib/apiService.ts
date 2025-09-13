@@ -93,3 +93,19 @@ export async function joinEvent(eventId: string) {
     .single();
   return { data, error };
 }
+
+/**
+ * Retrieves events that the current user has joined
+ * @returns Joined events with event and organization details
+ */
+export async function getJoinedEvents() {
+  const userId = await authService.getCurrentUserId();
+  const { data, error } = await supabase
+    .from('joins')
+    .select(
+      `event_id, events (*, organizations (name))`
+    )
+    .eq('user_id', userId)
+    .eq('status', 'joined');
+  return { data, error };
+}
