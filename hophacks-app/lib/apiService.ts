@@ -11,3 +11,13 @@ export async function getAllEvents() {
     .limit(100);
   return { data, error };
 }
+
+export async function getUserInfoById(id: string) {
+  const {data, error} = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  return { data, error };
+}
