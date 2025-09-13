@@ -46,18 +46,37 @@ export async function getEventById(eventId: string) {
 }
 
 export async function getEventRecommendations() {
-  const { data, error } = await supabase
+  const userId = await authService.getCurrentUserId();
+
+  const { data: joined, error: joinError } = await supabase
+    .from('joins')
+    .select('event_id')
+    .eq('user_id', userId);
+
+  if (joinError) return { data: null, error: joinError };
+
+  const joinedIds = joined?.map((j: any) => j.event_id) || [];
+
+  const query = supabase
     .from('events')
-    .select(`
-      *,
+    .select(
+      `*,
       organizations (
         id,
         name,
         email,
         phone,
         verified
-      )
-    `)
+      )`
+    )
+    .limit(100);
+
+  if (joinedIds.length > 0) {
+    const idList = `(${joinedIds.join(',')})`;
+    query.not('id', 'in', idList);
+  }
+
+  const { data, error } = await query;
   return { data, error };
 }
 

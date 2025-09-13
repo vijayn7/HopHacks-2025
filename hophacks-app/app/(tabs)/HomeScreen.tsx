@@ -120,7 +120,7 @@ const HomeScreen = () => {
           console.log('Error fetching events:', eventsError);
         } else if (eventsData) {
           // Transform the data to match the expected format
-          const transformedEvents = eventsData.map((event) => ({
+          const transformedEvents = eventsData.map((event: any) => ({
             id: event.id,
             title: event.title,
             description: event.description,
