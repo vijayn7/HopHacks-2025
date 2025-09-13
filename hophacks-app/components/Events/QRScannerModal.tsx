@@ -17,6 +17,7 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
   const [permission, requestPermission] = useCameraPermissions();
   const [mode, setMode] = useState<'in' | 'out'>('in');
   const [scanned, setScanned] = useState(false);
+  const [bannerMessage, setBannerMessage] = useState<string | null>(null);
   const processingRef = useRef(false);
   const highlight = useRef(new Animated.Value(0)).current;
 
@@ -63,14 +64,21 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
               : await checkOutFromEvent(eventId);
             if (result.error) {
               console.log(result.error.message || 'Unable to update attendance');
+              onClose();
+              processingRef.current = false;
             } else {
-              console.log(
-                isSignIn ? 'Checked in successfully' : 'Checked out successfully'
+              const eventTitle = result.data?.events?.title || 'event';
+              const points = result.points ?? 0;
+              setBannerMessage(
+                `Successfully signed ${isSignIn ? 'in to' : 'out of'} ${eventTitle}. ${points} points awarded.`
               );
               onSuccess && onSuccess();
+              setTimeout(() => {
+                setBannerMessage(null);
+                onClose();
+                processingRef.current = false;
+              }, 3000);
             }
-            onClose();
-            processingRef.current = false;
           },
         },
       ]
@@ -82,6 +90,11 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
+        {bannerMessage && (
+          <View style={styles.banner}>
+            <Text style={styles.bannerText}>{bannerMessage}</Text>
+          </View>
+        )}
         {permission.granted ? (
           <>
             <CameraView
@@ -219,5 +232,19 @@ const createStyles = (colors: ColorScheme) =>
     },
     permissionText: {
       color: colors.textPrimary,
+    },
+    banner: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      paddingVertical: 10,
+      backgroundColor: colors.success,
+      alignItems: 'center',
+    },
+    bannerText: {
+      color: colors.textWhite,
+      fontSize: 14,
+      fontWeight: '600',
     },
   });
