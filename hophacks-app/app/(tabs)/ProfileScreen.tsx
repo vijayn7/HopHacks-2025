@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Switch,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
@@ -39,7 +38,7 @@ const ProfileScreen = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const { colors, theme, toggleTheme } = useTheme();
+  const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
   
   // Form fields (these are the working copies during editing)
@@ -214,14 +213,6 @@ const ProfileScreen = () => {
           {renderStatCard('Total Points', profile?.total_points || 0)}
           {renderStatCard('Current Streak', `${profile?.current_streak_weeks || 0} weeks`)}
           {renderStatCard('Longest Streak', `${profile?.longest_streak || 0} weeks`)}
-        </View>
-
-        {/* Theme Section */}
-        <View style={styles.formContainer}>
-          <View style={styles.themeRow}>
-            <Text style={styles.inputLabel}>Dark Mode</Text>
-            <Switch value={theme === 'dark'} onValueChange={toggleTheme} />
-          </View>
         </View>
 
         {/* Profile Form */}
@@ -456,11 +447,5 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     color: colors.textWhite,
     fontSize: 16,
     fontWeight: '600',
-  },
-  themeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
   },
 });
