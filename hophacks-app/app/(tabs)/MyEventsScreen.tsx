@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-nat
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
+import QRScannerModal from '../../components/Events/QRScannerModal';
 import SpecificEventPage from '../../components/SpecificEventPage';
 import { getJoinedEvents } from '../../lib/apiService';
 
@@ -22,6 +23,7 @@ const MyEventsScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPageVisible, setEventPageVisible] = useState(false);
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   useEffect(() => {
     fetchJoinedEvents();
@@ -57,6 +59,8 @@ const MyEventsScreen = () => {
             capacity: event.capacity,
             org_name: event.organizations?.name || 'Unknown Organization',
             distance: event.lat && event.lng ? 'Near you' : 'Location TBD',
+            checkInTime: join.check_in_at,
+            checkOutTime: join.check_out_at,
             onPress: undefined,
             showLearnMoreButton: false,
           };
@@ -129,6 +133,10 @@ const MyEventsScreen = () => {
                     {...event}
                     onPress={() => openEvent(event.id)}
                     showLearnMoreButton={false}
+                    showScanButton={new Date(event.ends_at) >= new Date()}
+                    onScanPress={() => setScannerVisible(true)}
+                    checkInTime={new Date(event.ends_at) < new Date() ? event.checkInTime : undefined}
+                    checkOutTime={new Date(event.ends_at) < new Date() ? event.checkOutTime : undefined}
                   />
                 </View>
               ))}
@@ -150,6 +158,12 @@ const MyEventsScreen = () => {
           onJoinSuccess={closeEvent}
         />
       )}
+
+      <QRScannerModal
+        visible={scannerVisible}
+        onClose={() => setScannerVisible(false)}
+        onSuccess={fetchJoinedEvents}
+      />
     </>
   );
 };

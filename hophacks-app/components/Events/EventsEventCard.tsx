@@ -20,6 +20,10 @@ export interface EventsEventCardProps {
   distance?: string;
   onPress?: () => void;
   showLearnMoreButton?: boolean;
+  onScanPress?: () => void;
+  showScanButton?: boolean;
+  checkInTime?: string;
+  checkOutTime?: string;
 }
 
 const EventsEventCard: React.FC<EventsEventCardProps> = ({
@@ -36,6 +40,10 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
   distance = 'Location TBD',
   onPress,
   showLearnMoreButton = true,
+  onScanPress,
+  showScanButton = false,
+  checkInTime,
+  checkOutTime,
 }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -71,6 +79,9 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
     }
     return distance;
   };
+
+  const formatTimeOnly = (time: string) =>
+    new Date(time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
   return (
     <TouchableOpacity 
@@ -118,10 +129,30 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
         </View>
       </View>
       
-      {showLearnMoreButton && (
-        <TouchableOpacity style={styles.learnMoreButton} onPress={onPress} activeOpacity={0.8}>
-          <Text style={styles.learnMoreButtonText}>Learn More</Text>
-        </TouchableOpacity>
+      {(checkInTime || checkOutTime) && (
+        <View style={styles.attendanceTimes}>
+          {checkInTime && (
+            <Text style={styles.attendanceText}>Sign in: {formatTimeOnly(checkInTime)}</Text>
+          )}
+          {checkOutTime && (
+            <Text style={styles.attendanceText}>Sign out: {formatTimeOnly(checkOutTime)}</Text>
+          )}
+        </View>
+      )}
+
+      {(showLearnMoreButton || showScanButton) && (
+        <View style={styles.buttonRow}>
+          {showLearnMoreButton && (
+            <TouchableOpacity style={styles.learnMoreButton} onPress={onPress} activeOpacity={0.8}>
+              <Text style={styles.learnMoreButtonText}>Learn More</Text>
+            </TouchableOpacity>
+          )}
+          {showScanButton && (
+            <TouchableOpacity style={styles.scanButton} onPress={onScanPress} activeOpacity={0.8}>
+              <Ionicons name="qr-code-outline" size={20} color={colors.textWhite} />
+            </TouchableOpacity>
+          )}
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -192,6 +223,19 @@ const createStyles = (colors: ColorScheme) =>
       color: colors.textSecondary,
       marginLeft: 6,
     },
+    attendanceTimes: {
+      marginBottom: 12,
+    },
+    attendanceText: {
+      fontSize: 12,
+      color: colors.warning,
+      marginBottom: 4,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
     learnMoreButton: {
       backgroundColor: colors.primary,
       paddingVertical: 8,
@@ -203,5 +247,10 @@ const createStyles = (colors: ColorScheme) =>
       color: colors.textWhite,
       fontSize: 14,
       fontWeight: '600',
+    },
+    scanButton: {
+      backgroundColor: colors.primary,
+      padding: 8,
+      borderRadius: 8,
     },
   });
