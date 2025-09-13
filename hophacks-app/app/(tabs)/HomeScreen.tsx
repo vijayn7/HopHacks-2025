@@ -279,7 +279,7 @@ const HomeScreen = () => {
           showsHorizontalScrollIndicator={false}
           style={styles.eventsScrollView}
         >
-          {suggestedEvents.map((event) => {
+          {suggestedEvents.slice(0, 3).map((event) => {
             if (!animations.current[event.id]) {
               animations.current[event.id] = {
                 slide: new Animated.Value(0),
