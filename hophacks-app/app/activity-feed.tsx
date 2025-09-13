@@ -6,11 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import type { ColorScheme } from '../constants/colors';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { getGroupActivityFeed } from '../lib/apiService';
 
 interface GroupActivity {
   id: string;
@@ -19,9 +21,11 @@ interface GroupActivity {
   points: number;
   timestamp: string;
   eventName?: string;
+  avatar?: string;
 }
 
 const ActivityFeedScreen = () => {
+  const { groupId } = useLocalSearchParams();
   const [activities, setActivities] = useState<GroupActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const { colors, theme } = useTheme();
@@ -30,102 +34,33 @@ const ActivityFeedScreen = () => {
   useEffect(() => {
     const loadActivityFeed = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!groupId) {
+          console.error('No group ID provided');
+          Alert.alert('Error', 'No group selected. Please go back and select a group.');
+          return;
+        }
+
+        const { data, error } = await getGroupActivityFeed(groupId as string, 20, false); // false = show all activities, not just current month
         
-        const mockActivities: GroupActivity[] = [
-          { 
-            id: '1', 
-            memberName: 'Sarah Chen', 
-            action: 'completed', 
-            points: 120, 
-            timestamp: '2 hours ago',
-            eventName: 'Food Pantry Packing'
-          },
-          { 
-            id: '2', 
-            memberName: 'Mike Rodriguez', 
-            action: 'finished', 
-            points: 80, 
-            timestamp: '4 hours ago',
-            eventName: 'Beach Cleanup'
-          },
-          { 
-            id: '3', 
-            memberName: 'Emma Wilson', 
-            action: 'volunteered at', 
-            points: 95, 
-            timestamp: '6 hours ago',
-            eventName: 'Animal Shelter'
-          },
-          { 
-            id: '4', 
-            memberName: 'David Kim', 
-            action: 'completed', 
-            points: 150, 
-            timestamp: '1 day ago',
-            eventName: 'Community Garden'
-          },
-          { 
-            id: '5', 
-            memberName: 'Alex Johnson', 
-            action: 'finished', 
-            points: 200, 
-            timestamp: '1 day ago',
-            eventName: 'Soup Kitchen'
-          },
-          { 
-            id: '6', 
-            memberName: 'Lisa Park', 
-            action: 'volunteered at', 
-            points: 75, 
-            timestamp: '2 days ago',
-            eventName: 'Senior Center'
-          },
-          { 
-            id: '7', 
-            memberName: 'James Brown', 
-            action: 'completed', 
-            points: 110, 
-            timestamp: '2 days ago',
-            eventName: 'Food Drive'
-          },
-          { 
-            id: '8', 
-            memberName: 'Maria Garcia', 
-            action: 'finished', 
-            points: 90, 
-            timestamp: '3 days ago',
-            eventName: 'Park Cleanup'
-          },
-          { 
-            id: '9', 
-            memberName: 'Tom Wilson', 
-            action: 'volunteered at', 
-            points: 85, 
-            timestamp: '3 days ago',
-            eventName: 'Homeless Shelter'
-          },
-          { 
-            id: '10', 
-            memberName: 'Anna Lee', 
-            action: 'completed', 
-            points: 130, 
-            timestamp: '4 days ago',
-            eventName: 'Blood Drive'
-          },
-        ];
-        
-        setActivities(mockActivities);
+        if (error) {
+          console.error('Error loading activity feed:', error);
+          Alert.alert('Error', 'Failed to load activity feed. Please try again.');
+          return;
+        }
+
+        if (data) {
+          setActivities(data);
+        }
       } catch (error) {
         console.error('Error loading activity feed:', error);
+        Alert.alert('Error', 'Failed to load activity feed. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     loadActivityFeed();
-  }, []);
+  }, [groupId]);
 
   const getActivityIcon = (action: string) => {
     if (action.includes('completed') || action.includes('finished')) {

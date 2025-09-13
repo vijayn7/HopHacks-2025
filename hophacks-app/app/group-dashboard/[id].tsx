@@ -12,13 +12,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { router, useLocalSearchParams } from 'expo-router';
+import { getGroupDashboard } from '../../lib/apiService';
 
 interface GroupMember {
   id: string;
   name: string;
   avatar?: string;
   points: number;
+  hours: number;
   rank: number;
+  isAdmin: boolean;
+  role: string;
+  joinedAt: string;
 }
 
 interface GroupActivity {
@@ -26,15 +31,19 @@ interface GroupActivity {
   memberName: string;
   action: string;
   points: number;
+  hours: number;
+  eventName: string;
   timestamp: string;
 }
 
 interface Group {
   id: string;
   name: string;
+  description: string;
   memberCount: number;
   monthlyGoal: number;
   currentPoints: number;
+  progressPercentage: number;
   members: GroupMember[];
   recentActivity: GroupActivity[];
 }
@@ -46,40 +55,33 @@ const GroupDashboardScreen = () => {
   const { colors, theme } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
-  // Mock data - replace with real API calls
+  // Load group data from database
   useEffect(() => {
     const loadGroupData = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setLoading(true);
+        const { data: groupData, error } = await getGroupDashboard(id as string);
         
-        setGroup({
-          id: id as string,
-          name: 'UMich Volunteers',
-          memberCount: 15,
-          monthlyGoal: 20000,
-          currentPoints: 16500,
-          members: [
-            { id: '1', name: 'Alex Johnson', points: 5000, rank: 1 },
-            { id: '2', name: 'Sarah Chen', points: 3920, rank: 2 },
-            { id: '3', name: 'Mike Rodriguez', points: 3400, rank: 3 },
-            { id: '4', name: 'Emma Wilson', points: 2880, rank: 4 },
-            { id: '5', name: 'David Kim', points: 2600, rank: 5 },
-          ],
-          recentActivity: [
-            { id: '1', memberName: 'Sarah Chen', action: 'completed Food Pantry Packing', points: 120, timestamp: '2 hours ago' },
-            { id: '2', memberName: 'Mike Rodriguez', action: 'finished Beach Cleanup', points: 80, timestamp: '4 hours ago' },
-            { id: '3', memberName: 'Emma Wilson', action: 'volunteered at Animal Shelter', points: 95, timestamp: '6 hours ago' },
-          ],
-        });
+        if (error) {
+          console.error('Error loading group data:', error);
+          Alert.alert('Error', 'Failed to load group data. Please try again.');
+          return;
+        }
+
+        if (groupData) {
+          setGroup(groupData);
+        }
       } catch (error) {
         console.error('Error loading group data:', error);
+        Alert.alert('Error', 'Failed to load group data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    loadGroupData();
+    if (id) {
+      loadGroupData();
+    }
   }, [id]);
 
   const handleLeaveGroup = () => {
@@ -98,18 +100,21 @@ const GroupDashboardScreen = () => {
   };
 
   const handleViewLeaderboard = () => {
-    router.push('/leaderboard');
+    router.push(`/leaderboard?groupId=${id}`);
   };
 
   const handleViewActivity = () => {
-    router.push('/activity-feed');
+    router.push(`/activity-feed?groupId=${id}`);
   };
 
   const handleViewMembers = () => {
-    router.push('/members');
+    router.push(`/members?groupId=${id}`);
   };
 
-  const progressPercentage = group ? (group.currentPoints / group.monthlyGoal) * 100 : 0;
+  const progressPercentage = group ? group.progressPercentage : 0;
+  
+  // Get current month name
+  const currentMonth = new Date().toLocaleString('default', { month: 'long' });
 
   if (loading) {
     return (
@@ -148,7 +153,7 @@ const GroupDashboardScreen = () => {
 
       {/* Group Goal / Milestone Tracker */}
       <View style={styles.goalCard}>
-        <Text style={styles.goalTitle}>Monthly Goal</Text>
+        <Text style={styles.goalTitle}>{currentMonth} Goal</Text>
         <Text style={styles.goalProgress}>
           {group.currentPoints.toLocaleString()} / {group.monthlyGoal.toLocaleString()} Points
         </Text>
@@ -171,7 +176,7 @@ const GroupDashboardScreen = () => {
       {/* Leaderboard Preview Card */}
       <TouchableOpacity style={styles.previewCard} onPress={handleViewLeaderboard}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>🏆 Monthly Leaderboard</Text>
+          <Text style={styles.cardTitle}>🏆 {currentMonth} Leaderboard</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </View>
         <View style={styles.leaderboardPreview}>
@@ -203,7 +208,8 @@ const GroupDashboardScreen = () => {
           {group.recentActivity.map((activity) => (
             <View key={activity.id} style={styles.activityItem}>
               <Text style={styles.activityText}>
-                <Text style={styles.activityMember}>{activity.memberName}</Text> {activity.action}
+                <Text style={styles.activityMember}>{activity.memberName}</Text> {activity.action}{' '}
+                <Text style={styles.eventName}>{activity.eventName}</Text>
               </Text>
               <View style={styles.activityMeta}>
                 <Text style={styles.activityPoints}>+{activity.points} pts</Text>
@@ -223,13 +229,20 @@ const GroupDashboardScreen = () => {
         </View>
         <View style={styles.membersPreview}>
           <View style={styles.avatarCluster}>
-            {group.members.slice(0, 4).map((member) => (
-              <View key={member.id} style={styles.clusterAvatar}>
-                <Text style={styles.clusterAvatarText}>{member.name.charAt(0)}</Text>
+            {group.members.slice(0, 4).map((member, index) => (
+              <View key={member.id} style={[
+                styles.clusterAvatar,
+                { marginLeft: index > 0 ? -8 : 0 }
+              ]}>
+                {member.avatar ? (
+                  <Text style={styles.clusterAvatarText}>{member.name.charAt(0)}</Text>
+                ) : (
+                  <Text style={styles.clusterAvatarText}>{member.name.charAt(0)}</Text>
+                )}
               </View>
             ))}
             {group.memberCount > 4 && (
-              <View style={styles.moreAvatars}>
+              <View style={[styles.moreAvatars, { marginLeft: -8 }]}>
                 <Text style={styles.moreAvatarsText}>+{group.memberCount - 4}</Text>
               </View>
             )}
@@ -457,6 +470,10 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   },
   activityMember: {
     fontWeight: '600',
+  },
+  eventName: {
+    fontWeight: '500',
+    color: colors.textPrimary,
   },
   activityMeta: {
     flexDirection: 'row',

@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { router } from 'expo-router';
+import { getUserGroups, getTopGroupMember, createGroup, joinGroup } from '../../lib/apiService';
 
 interface GroupSummary {
   id: string;
@@ -21,9 +22,13 @@ interface GroupSummary {
   currentPoints: number;
   progressPercentage: number;
   description: string;
+  isAdmin: boolean;
+  isCreator: boolean;
+  role: string;
   topMember: {
     name: string;
     avatar?: string;
+    points?: number;
   };
 }
 
@@ -33,53 +38,36 @@ const GroupsScreen = () => {
   const { colors, theme } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
-  // Mock data - replace with real API calls
+  // Load groups from database
   useEffect(() => {
     const loadGroups = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setLoading(true);
+        const { data: groupsData, error } = await getUserGroups();
         
-        setGroups([
-          {
-            id: '1',
-            name: 'UMich Volunteers',
-            memberCount: 15,
-            monthlyGoal: 20000,
-            currentPoints: 16500,
-            progressPercentage: 83,
-            description: "UMich Class of '28 Volunteers",
-            topMember: {
-              name: 'Alex Johnson',
-            },
-          },
-          {
-            id: '2',
-            name: 'Community Gardeners',
-            memberCount: 8,
-            monthlyGoal: 12000,
-            currentPoints: 8400,
-            progressPercentage: 70,
-            description: "Growing community, one seed at a time",
-            topMember: {
-              name: 'Emma Wilson',
-            },
-          },
-          {
-            id: '3',
-            name: 'Animal Shelter Helpers',
-            memberCount: 12,
-            monthlyGoal: 16000,
-            currentPoints: 12800,
-            progressPercentage: 80,
-            description: "Caring for our furry friends",
-            topMember: {
-              name: 'James Brown',
-            },
-          },
-        ]);
+        if (error) {
+          console.error('Error loading groups:', error);
+          Alert.alert('Error', 'Failed to load groups. Please try again.');
+          return;
+        }
+
+        if (groupsData) {
+          // Load top member for each group
+          const groupsWithTopMembers = await Promise.all(
+            groupsData.map(async (group) => {
+              const { data: topMember } = await getTopGroupMember(group.id);
+              return {
+                ...group,
+                topMember: topMember || { name: 'No activity yet' }
+              };
+            })
+          );
+          
+          setGroups(groupsWithTopMembers);
+        }
       } catch (error) {
         console.error('Error loading groups:', error);
+        Alert.alert('Error', 'Failed to load groups. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -93,11 +81,97 @@ const GroupsScreen = () => {
   };
 
   const handleCreateGroup = () => {
-    Alert.alert('Create Group', 'Group creation feature coming soon!');
+    Alert.prompt(
+      'Create Group',
+      'Enter group name:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Create', 
+          onPress: async (groupName?: string) => {
+            if (!groupName?.trim()) return;
+            
+            try {
+              const { data, error } = await createGroup({
+                name: groupName.trim(),
+                description: `A group created by ${groupName.trim()}`,
+                monthly_goal: 10000
+              });
+              
+              if (error) {
+                Alert.alert('Error', (error as any).message || 'Failed to create group');
+                return;
+              }
+              
+              // Refresh the groups list
+              const { data: groupsData } = await getUserGroups();
+              if (groupsData) {
+                const groupsWithTopMembers = await Promise.all(
+                  groupsData.map(async (group) => {
+                    const { data: topMember } = await getTopGroupMember(group.id);
+                    return {
+                      ...group,
+                      topMember: topMember || { name: 'No activity yet' }
+                    };
+                  })
+                );
+                setGroups(groupsWithTopMembers);
+              }
+              
+              Alert.alert('Success', 'Group created successfully!');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to create group');
+            }
+          }
+        }
+      ],
+      'plain-text'
+    );
   };
 
   const handleJoinGroup = () => {
-    Alert.alert('Join Group', 'Enter group code to join');
+    Alert.prompt(
+      'Join Group',
+      'Enter group invite code:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Join', 
+          onPress: async (inviteCode?: string) => {
+            if (!inviteCode?.trim()) return;
+            
+            try {
+              const { data, error } = await joinGroup(inviteCode.trim());
+              
+              if (error) {
+                Alert.alert('Error', (error as any).message || 'Failed to join group');
+                return;
+              }
+              
+              // Refresh the groups list
+              const { data: groupsData } = await getUserGroups();
+              if (groupsData) {
+                const groupsWithTopMembers = await Promise.all(
+                  groupsData.map(async (group) => {
+                    const { data: topMember } = await getTopGroupMember(group.id);
+                    return {
+                      ...group,
+                      topMember: topMember || { name: 'No activity yet' }
+                    };
+                  })
+                );
+                setGroups(groupsWithTopMembers);
+              }
+              
+              Alert.alert('Success', `Successfully joined ${data?.name}!`);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to join group');
+            }
+          }
+        }
+      ],
+      'plain-text'
+    );
   };
 
   if (loading) {
@@ -150,7 +224,21 @@ const GroupsScreen = () => {
             {/* Group Header */}
             <View style={styles.groupHeader}>
               <View style={styles.groupInfo}>
-                <Text style={styles.groupName}>{group.name}</Text>
+                <View style={styles.groupTitleRow}>
+                  <Text style={styles.groupName}>{group.name}</Text>
+                  {group.isCreator && (
+                    <View style={styles.creatorBadge}>
+                      <Ionicons name="star" size={12} color={colors.groupGold} />
+                      <Text style={styles.creatorBadgeText}>Creator</Text>
+                    </View>
+                  )}
+                  {group.isAdmin && !group.isCreator && (
+                    <View style={styles.adminBadge}>
+                      <Ionicons name="person" size={12} color={colors.primary} />
+                      <Text style={styles.adminBadgeText}>Admin</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={styles.groupDescription}>{group.description}</Text>
                 <Text style={styles.memberCount}>{group.memberCount} Members</Text>
               </View>
@@ -296,11 +384,48 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   groupInfo: {
     flex: 1,
   },
+  groupTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   groupName: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    marginBottom: 4,
+    marginRight: 8,
+  },
+  creatorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.groupGold + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.groupGold,
+  },
+  creatorBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.groupGold,
+    marginLeft: 4,
+  },
+  adminBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  adminBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.primary,
+    marginLeft: 4,
   },
   groupDescription: {
     fontSize: 14,

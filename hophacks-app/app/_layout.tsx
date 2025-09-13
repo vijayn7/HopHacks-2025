@@ -26,7 +26,6 @@ export default function RootLayout() {
         <Stack.Screen
           name="leaderboard"
           options={{ 
-            title: "Monthly Leaderboard",
             headerShown: true,
             headerBackTitle: "Back"
           }}
