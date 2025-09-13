@@ -109,3 +109,42 @@ export async function getJoinedEvents() {
     .eq('status', 'joined');
   return { data, error };
 }
+
+/**
+ * Retrieves events the current user has not yet joined
+ * @returns Events with organization details that the user hasn't joined
+ */
+export async function getUnjoinedEvents() {
+  const userId = await authService.getCurrentUserId();
+
+  const { data: joined, error: joinError } = await supabase
+    .from('joins')
+    .select('event_id')
+    .eq('user_id', userId);
+
+  if (joinError) return { data: null, error: joinError };
+
+  const joinedIds = joined?.map((j: any) => j.event_id) || [];
+
+  const query = supabase
+    .from('events')
+    .select(
+      `*,
+      organizations (
+        id,
+        name,
+        email,
+        phone,
+        verified
+      )`
+    )
+    .limit(100);
+
+  if (joinedIds.length > 0) {
+    const idList = `(${joinedIds.map((id: string) => `'${id}'`).join(',')})`;
+    query.not('id', 'in', idList);
+  }
+
+  const { data, error } = await query;
+  return { data, error };
+}

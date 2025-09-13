@@ -15,7 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
 import SpecificEventPage from '../../components/SpecificEventPage';
-import { getAllEvents } from '../../lib/apiService';
+import { getUnjoinedEvents } from '../../lib/apiService';
 
 interface Event extends EventsEventCardProps {
   org_name: string;
@@ -48,8 +48,8 @@ const EventsScreen = () => {
       setLoading(true);
       setError(null);
       
-      // Fetch events using the API service
-      const { data, error } = await getAllEvents();
+      // Fetch events the user hasn't joined
+      const { data, error } = await getUnjoinedEvents();
 
       if (error) {
         setError(error.message || 'Failed to fetch events');
@@ -165,8 +165,10 @@ const EventsScreen = () => {
               const opacity = slide.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
               return (
                 <View key={event.id} style={styles.eventWrapper}>
-                  <Animated.View style={[styles.joinBubbleContainer, { opacity: bubble }]}> 
-                    <View style={styles.joinBubble} />
+                  <Animated.View style={[styles.joinBubbleContainer, { opacity: bubble }]}>
+                    <View style={styles.joinBubble}>
+                      <Text style={styles.joinBubbleText}>Joined!</Text>
+                    </View>
                   </Animated.View>
                   <Animated.View style={{ transform: [{ translateX }], opacity }}>
                     <EventsEventCard
@@ -246,10 +248,14 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     pointerEvents: 'none',
   },
   joinBubble: {
-    width: 24,
-    height: 24,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 12,
     backgroundColor: colors.success,
+  },
+  joinBubbleText: {
+    color: colors.textWhite,
+    fontWeight: '600',
   },
   loadingText: {
     fontSize: 16,

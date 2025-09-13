@@ -335,8 +335,10 @@ const HomeScreen = () => {
             const opacity = slide.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
             return (
               <View key={event.id} style={styles.suggestedEventWrapper}>
-                <Animated.View style={[styles.joinBubbleContainer, { opacity: bubble }]}> 
-                  <View style={styles.joinBubble} />
+                <Animated.View style={[styles.joinBubbleContainer, { opacity: bubble }]}>
+                  <View style={styles.joinBubble}>
+                    <Text style={styles.joinBubbleText}>Joined!</Text>
+                  </View>
                 </Animated.View>
                 <Animated.View style={{ transform: [{ translateX }], opacity }}>
                   <HomeEventCard
@@ -567,10 +569,14 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     pointerEvents: 'none',
   },
   joinBubble: {
-    width: 24,
-    height: 24,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 12,
     backgroundColor: colors.success,
+  },
+  joinBubbleText: {
+    color: colors.textWhite,
+    fontWeight: '600',
   },
   // Activity Styles
   activityList: {
