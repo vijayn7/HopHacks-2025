@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
+import type { ColorScheme } from '../../constants/colors';
 import EventCallToActionButton from '../EventCallToActionButton';
 
 // Interface for EventsScreen event cards (full-width, detailed view)
@@ -36,6 +37,9 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
   onPress,
   showJoinButton = true,
 }) => {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   // Format date/time for display
   const formatEventTime = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
@@ -77,7 +81,7 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
       <View style={styles.eventHeader}>
         {/* Event Image Placeholder */}
         <View style={styles.eventImageContainer}>
-          <Ionicons name="image-outline" size={32} color={Colors.textSecondary} />
+          <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
         </View>
         
         {/* Event Info */}
@@ -95,21 +99,21 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
       
       <View style={styles.eventDetails}>
         <View style={styles.eventDetailItem}>
-          <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
+          <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
           <Text style={styles.eventDetailText}>{getLocationText()}</Text>
         </View>
         <View style={styles.eventDetailItem}>
-          <Ionicons name="pricetag-outline" size={14} color={Colors.textSecondary} />
+          <Ionicons name="pricetag-outline" size={14} color={colors.textSecondary} />
           <Text style={styles.eventDetailText}>{formatCause(cause)}</Text>
         </View>
         {capacity && (
           <View style={styles.eventDetailItem}>
-            <Ionicons name="people-outline" size={14} color={Colors.textSecondary} />
+            <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
             <Text style={styles.eventDetailText}>Cap: {capacity}</Text>
           </View>
         )}
         <View style={styles.eventDetailItem}>
-          <Ionicons name="time-outline" size={14} color={Colors.textSecondary} />
+          <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
           <Text style={styles.eventDetailText}>{formatEventTime(starts_at, ends_at)}</Text>
         </View>
       </View>
@@ -123,66 +127,67 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
 
 export default EventsEventCard;
 
-const styles = StyleSheet.create({
-  eventCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
-    shadowColor: Colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    eventCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 16,
+      width: '100%',
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  eventHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  eventImageContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    backgroundColor: Colors.borderLight || '#E5E5E5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  eventInfo: {
-    flex: 1,
-    justifyContent: 'flex-start',
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    marginBottom: 4,
-  },
-  eventOrganization: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  eventDescription: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginBottom: 12,
-    lineHeight: 18,
-  },
-  eventDetails: {
-    marginBottom: 16,
-  },
-  eventDetailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  eventDetailText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginLeft: 6,
-  },
-});
+    eventHeader: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 12,
+    },
+    eventImageContainer: {
+      width: 60,
+      height: 60,
+      borderRadius: 8,
+      backgroundColor: colors.borderLight || '#E5E5E5',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    eventInfo: {
+      flex: 1,
+      justifyContent: 'flex-start',
+    },
+    eventTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.textPrimary,
+      marginBottom: 4,
+    },
+    eventOrganization: {
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    eventDescription: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 12,
+      lineHeight: 18,
+    },
+    eventDetails: {
+      marginBottom: 16,
+    },
+    eventDetailItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    eventDetailText: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginLeft: 6,
+    },
+  });

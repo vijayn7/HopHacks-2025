@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { Colors } from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
+import type { ColorScheme } from '../../constants/colors';
 import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
 import { getAllEvents } from '../../lib/apiService';
 
@@ -13,6 +14,8 @@ const EventsScreen = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
     fetchEvents();
@@ -59,7 +62,7 @@ const EventsScreen = () => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading events...</Text>
       </View>
     );
@@ -102,14 +105,14 @@ const EventsScreen = () => {
 
 export default EventsScreen;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   centerContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -121,12 +124,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   eventsContainer: {
     paddingHorizontal: 16,
@@ -138,12 +141,12 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 12,
   },
   errorText: {
     fontSize: 16,
-    color: Colors.error || '#FF6B6B',
+    color: colors.error || '#FF6B6B',
     textAlign: 'center',
     paddingHorizontal: 20,
   },
@@ -154,12 +157,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 });

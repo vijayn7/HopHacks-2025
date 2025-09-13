@@ -11,7 +11,8 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../constants/colors';
+import { ColorScheme } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { getEventById } from '../lib/apiService';
 
 interface EventDetail {
@@ -44,6 +45,8 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
   visible,
   onClose,
 }) => {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +123,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading event details...</Text>
         </View>
       );
@@ -129,7 +132,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
     if (error || !event) {
       return (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={Colors.textSecondary} />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.textSecondary} />
           <Text style={styles.errorText}>{error || 'Event not found'}</Text>
           <TouchableOpacity style={styles.backButton} onPress={onClose}>
             <Text style={styles.backButtonText}>Go Back</Text>
@@ -145,23 +148,23 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
           {/* Event Image Banner */}
           <View style={styles.bannerContainer}>
             <View style={styles.imagePlaceholder}>
-              <Ionicons name="calendar" size={56} color={Colors.primary} style={styles.placeholderIcon} />
+              <Ionicons name="calendar" size={56} color={colors.primary} style={styles.placeholderIcon} />
               <Text style={styles.placeholderText}>Event Image</Text>
             </View>
             
             {/* Navigation Buttons */}
-            <TouchableOpacity 
-              style={[styles.navButton, styles.backButton]} 
+            <TouchableOpacity
+              style={[styles.navButton, styles.backButton]}
               onPress={onClose}
             >
-              <Ionicons name="arrow-back" size={26} color="#000" />
+              <Ionicons name="arrow-back" size={26} color={colors.textPrimary} />
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={[styles.navButton, styles.shareButton]} 
+            <TouchableOpacity
+              style={[styles.navButton, styles.shareButton]}
               onPress={() => console.log('Share event')}
             >
-              <Ionicons name="share-outline" size={26} color="#000" />
+              <Ionicons name="share-outline" size={26} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -177,7 +180,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
             <Text style={styles.organizationName}>
               {event.organizations?.name || 'Organization'}
               {event.organizations?.verified && (
-                <Ionicons name="checkmark-circle" size={16} color={Colors.primary} style={styles.verifiedIcon} />
+                <Ionicons name="checkmark-circle" size={16} color={colors.primary} style={styles.verifiedIcon} />
               )}
             </Text>
           </View>
@@ -185,7 +188,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
           {/* Key Event Details */}
           <View style={styles.detailsCard}>
             <View style={styles.detailRow}>
-              <Ionicons name="location" size={24} color={Colors.primary} style={styles.detailIcon} />
+              <Ionicons name="location" size={24} color={colors.primary} style={styles.detailIcon} />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Location</Text>
                 <Text style={styles.detailValue}>{getLocationText()}</Text>
@@ -195,7 +198,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
             <View style={styles.detailDivider} />
 
             <View style={styles.detailRow}>
-              <Ionicons name="pricetag" size={24} color={Colors.primary} style={styles.detailIcon} />
+              <Ionicons name="pricetag" size={24} color={colors.primary} style={styles.detailIcon} />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Category</Text>
                 <Text style={styles.detailValue}>{formatCause(event.cause)}</Text>
@@ -206,7 +209,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
               <>
                 <View style={styles.detailDivider} />
                 <View style={styles.detailRow}>
-                  <Ionicons name="people" size={24} color={Colors.primary} style={styles.detailIcon} />
+                  <Ionicons name="people" size={24} color={colors.primary} style={styles.detailIcon} />
                   <View style={styles.detailContent}>
                     <Text style={styles.detailLabel}>Capacity</Text>
                     <Text style={styles.detailValue}>Cap: {event.capacity} people</Text>
@@ -218,7 +221,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
             <View style={styles.detailDivider} />
 
             <View style={styles.detailRow}>
-              <Ionicons name="time" size={24} color={Colors.primary} style={styles.detailIcon} />
+              <Ionicons name="time" size={24} color={colors.primary} style={styles.detailIcon} />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Date & Time</Text>
                 <Text style={styles.detailValue}>{formatEventTime(event.starts_at, event.ends_at)}</Text>
@@ -264,258 +267,259 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F8F8',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: Colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-    paddingHorizontal: 20,
-  },
-  errorText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  errorBackButton: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: Colors.primary,
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: Colors.textWhite,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  headerContainer: {
-    position: 'relative',
-  },
-  bannerContainer: {
-    height: 240,
-    backgroundColor: '#F0F0F0',
-    position: 'relative',
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-  },
-  imagePlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    borderRadius: 16,
-    margin: 16,
-  },
-  placeholderIcon: {
-    marginBottom: 8,
-  },
-  placeholderText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: Colors.primary,
-    opacity: 0.8,
-  },
-  navButton: {
-    position: 'absolute',
-    top: 50,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
+const getStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  backButton: {
-    left: 20,
-  },
-  shareButton: {
-    right: 20,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 120, // Space for sticky button
-  },
-  mainInfoCard: {
-    backgroundColor: Colors.surface,
-    marginHorizontal: 20,
-    marginTop: -16,
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: Colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 8,
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
     },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
-    zIndex: 1,
-  },
-  eventTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-    marginBottom: 8,
-    lineHeight: 34,
-  },
-  organizationName: {
-    fontSize: 18,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  verifiedIcon: {
-    marginLeft: 6,
-  },
-  detailsCard: {
-    backgroundColor: Colors.surface,
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: Colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    loadingText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: colors.textSecondary,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  detailIcon: {
-    marginRight: 16,
-    width: 24,
-    textAlign: 'center',
-  },
-  detailContent: {
-    flex: 1,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  detailValue: {
-    fontSize: 17,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-    lineHeight: 22,
-  },
-  detailDivider: {
-    height: 1,
-    backgroundColor: Colors.border || '#E5E5E5',
-    marginVertical: 4,
-    marginLeft: 40, // Align with content, not icons
-  },
-  descriptionCard: {
-    backgroundColor: Colors.surface,
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: Colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      paddingHorizontal: 20,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  sectionHeader: {
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.primary,
-  },
-  descriptionHeading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-  },
-  descriptionText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    lineHeight: 24,
-    fontWeight: '400',
-  },
-  bottomSpacing: {
-    height: 40,
-  },
-  stickyButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40, // Safe area for iOS home bar
-    shadowColor: Colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: -4,
+    errorText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: 'center',
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  joinButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 18,
-    borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    errorBackButton: {
+      marginTop: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      backgroundColor: colors.primary,
+      borderRadius: 8,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  joinButtonText: {
-    color: Colors.textWhite,
-    fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-});
+    backButtonText: {
+      color: colors.textWhite,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    headerContainer: {
+      position: 'relative',
+    },
+    bannerContainer: {
+      height: 240,
+      backgroundColor: colors.surfaceSecondary,
+      position: 'relative',
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+    },
+    imagePlaceholder: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      borderRadius: 16,
+      margin: 16,
+    },
+    placeholderIcon: {
+      marginBottom: 8,
+    },
+    placeholderText: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.primary,
+      opacity: 0.8,
+    },
+    navButton: {
+      position: 'absolute',
+      top: 50,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.surface,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    backButton: {
+      left: 20,
+    },
+    shareButton: {
+      right: 20,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingBottom: 120, // Space for sticky button
+    },
+    mainInfoCard: {
+      backgroundColor: colors.surface,
+      marginHorizontal: 20,
+      marginTop: -16,
+      borderRadius: 20,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 8,
+      },
+      shadowOpacity: 0.12,
+      shadowRadius: 16,
+      elevation: 8,
+      zIndex: 1,
+    },
+    eventTitle: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: colors.textPrimary,
+      marginBottom: 8,
+      lineHeight: 34,
+    },
+    organizationName: {
+      fontSize: 18,
+      color: colors.textSecondary,
+      fontWeight: '500',
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    verifiedIcon: {
+      marginLeft: 6,
+    },
+    detailsCard: {
+      backgroundColor: colors.surface,
+      marginHorizontal: 20,
+      marginTop: 20,
+      borderRadius: 20,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+    },
+    detailIcon: {
+      marginRight: 16,
+      width: 24,
+      textAlign: 'center',
+    },
+    detailContent: {
+      flex: 1,
+    },
+    detailLabel: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      fontWeight: '500',
+      marginBottom: 4,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    detailValue: {
+      fontSize: 17,
+      color: colors.textPrimary,
+      fontWeight: '600',
+      lineHeight: 22,
+    },
+    detailDivider: {
+      height: 1,
+      backgroundColor: colors.border || '#E5E5E5',
+      marginVertical: 4,
+      marginLeft: 40, // Align with content, not icons
+    },
+    descriptionCard: {
+      backgroundColor: colors.surface,
+      marginHorizontal: 20,
+      marginTop: 20,
+      borderRadius: 20,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+    sectionHeader: {
+      marginBottom: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 2,
+      borderBottomColor: colors.primary,
+    },
+    descriptionHeading: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: colors.textPrimary,
+    },
+    descriptionText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      lineHeight: 24,
+      fontWeight: '400',
+    },
+    bottomSpacing: {
+      height: 40,
+    },
+    stickyButtonContainer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: colors.surface,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 40, // Safe area for iOS home bar
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: -4,
+      },
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    joinButton: {
+      backgroundColor: colors.primary,
+      paddingVertical: 18,
+      borderRadius: 16,
+      alignItems: 'center',
+      shadowColor: colors.primary,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    joinButtonText: {
+      color: colors.textWhite,
+      fontSize: 20,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+    },
+  });
 
 export default SpecificEventPage;
