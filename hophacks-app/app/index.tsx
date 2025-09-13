@@ -10,10 +10,12 @@ import MyEventsScreen from './(tabs)/MyEventsScreen';
 import GroupsScreen from './(tabs)/GroupsScreen';
 import ProfileScreen from './(tabs)/ProfileScreen';
 import { authService } from '../lib/authService';
+import LoginScreen from '../components/Auth/LoginScreen';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState('home');
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { colors, theme } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -23,11 +25,11 @@ export default function Index() {
       try {
         console.log('Initializing authentication...');
         const authSuccess = await authService.initializeAuth();
-        
+        setIsAuthenticated(authSuccess);
         if (authSuccess) {
           console.log('App initialized successfully');
         } else {
-          console.log('Authentication failed, but continuing with app');
+          console.log('No existing session, showing login screen');
         }
       } catch (error) {
         console.log('App initialization error:', error);
@@ -55,7 +57,7 @@ export default function Index() {
       case 'groups':
         return <GroupsScreen />;
       case 'profile':
-        return <ProfileScreen />;
+        return <ProfileScreen onSignOut={() => setIsAuthenticated(false)} />;
       default:
         return <HomeScreen />;
     }
@@ -67,6 +69,17 @@ export default function Index() {
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Initializing app...</Text>
       </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <LoginScreen
+        onAuthSuccess={() => {
+          setIsAuthenticated(true);
+          setActiveTab('home');
+        }}
+      />
     );
   }
 

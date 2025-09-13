@@ -224,7 +224,7 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -232,7 +232,7 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   avatarText: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.textWhite,
   },
   memberInfo: {
     flex: 1,

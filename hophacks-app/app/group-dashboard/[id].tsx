@@ -626,7 +626,7 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 12,
@@ -634,7 +634,7 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   avatarText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.textWhite,
   },
   memberInfo: {
     flex: 1,
@@ -696,7 +696,7 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: -8,
@@ -706,7 +706,7 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   clusterAvatarText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.textWhite,
   },
   moreAvatars: {
     width: 32,

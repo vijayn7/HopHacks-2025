@@ -487,7 +487,7 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
@@ -495,7 +495,7 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   avatarText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.textWhite,
   },
   topMemberName: {
     fontSize: 14,

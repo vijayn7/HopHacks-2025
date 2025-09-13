@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { getCurrentUserProfile, updateUserProfile, updateUserEmail } from '../../lib/apiService';
@@ -32,7 +33,11 @@ interface Profile {
   created_at: string;
 }
 
-const ProfileScreen = () => {
+interface ProfileScreenProps {
+  onSignOut: () => void;
+}
+
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [email, setEmail] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -166,6 +171,28 @@ const ProfileScreen = () => {
     }
   };
 
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await authService.signOut();
+              onSignOut();
+            } catch (error) {
+              console.log('Error signing out:', error);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const renderStatCard = (label: string, value: number | string, icon?: string) => (
     <View style={styles.statCard}>
       <Text style={styles.statValue}>{value}</Text>
@@ -297,13 +324,20 @@ const ProfileScreen = () => {
               onPress={handleSave}
               disabled={saving}
             >
-              {saving ? (
-                <ActivityIndicator color={colors.textWhite} />
-              ) : (
-                <Text style={styles.saveButtonText}>Save Changes</Text>
-              )}
-            </TouchableOpacity>
+          {saving ? (
+            <ActivityIndicator color={colors.textWhite} />
+          ) : (
+            <Text style={styles.saveButtonText}>Save Changes</Text>
           )}
+        </TouchableOpacity>
+      )}
+    </View>
+
+        <View style={styles.signOutSection}>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <Ionicons name="log-out-outline" size={20} color={colors.error} />
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -447,5 +481,31 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     color: colors.textWhite,
     fontSize: 16,
     fontWeight: '600',
+  },
+  themeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  signOutSection: {
+    marginTop: 24,
+    marginHorizontal: 20,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.error,
+  },
+  signOutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.error,
+    marginLeft: 8,
   },
 });

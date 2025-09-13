@@ -46,18 +46,37 @@ export async function getEventById(eventId: string) {
 }
 
 export async function getEventRecommendations() {
-  const { data, error } = await supabase
+  const userId = await authService.getCurrentUserId();
+
+  const { data: joined, error: joinError } = await supabase
+    .from('joins')
+    .select('event_id')
+    .eq('user_id', userId);
+
+  if (joinError) return { data: null, error: joinError };
+
+  const joinedIds = joined?.map((j: any) => j.event_id) || [];
+
+  const query = supabase
     .from('events')
-    .select(`
-      *,
+    .select(
+      `*,
       organizations (
         id,
         name,
         email,
         phone,
         verified
-      )
-    `)
+      )`
+    )
+    .limit(100);
+
+  if (joinedIds.length > 0) {
+    const idList = `(${joinedIds.join(',')})`;
+    query.not('id', 'in', idList);
+  }
+
+  const { data, error } = await query;
   return { data, error };
 }
 
@@ -1268,4 +1287,160 @@ export async function getRecentActivity() {
     console.error('Error getting recent activity:', error);
     return { data: null, error };
   }
+}
+=======
+ * Creates a join record for the current user on the specified event
+ * @param eventId - The UUID of the event to join
+ * @returns Result of the join insert operation
+ */
+export async function joinEvent(eventId: string) {
+  const { data, error } = await supabase
+    .from('joins')
+    .insert({ event_id: eventId })
+    .select()
+    .single();
+  return { data, error };
+}
+
+export async function checkInToEvent(eventId: string) {
+  const userId = await authService.getCurrentUserId();
+  const { data: join, error: joinError } = await supabase
+    .from('joins')
+    .select('id, check_in_at')
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .single();
+
+  if (joinError) return { data: null, error: joinError };
+  if (join?.check_in_at) {
+    return { data: null, error: { message: 'Already checked in' } };
+  }
+
+  const { data, error } = await supabase
+    .from('joins')
+    .update({ check_in_at: new Date().toISOString() })
+    .eq('id', join.id)
+    .select()
+    .single();
+  return { data, error };
+}
+
+export async function checkOutFromEvent(eventId: string) {
+  const userId = await authService.getCurrentUserId();
+  const { data: join, error: joinError } = await supabase
+    .from('joins')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .single();
+
+  if (joinError) return { data: null, error: joinError };
+
+  const { data, error } = await supabase
+    .from('joins')
+    .update({ check_out_at: new Date().toISOString() })
+    .eq('id', join.id)
+    .select()
+    .single();
+  return { data, error };
+}
+
+/**
+ * Retrieves events that the current user has joined
+ * @returns Joined events with event and organization details
+ */
+export async function getJoinedEvents() {
+  const userId = await authService.getCurrentUserId();
+  const { data, error } = await supabase
+    .from('joins')
+    .select(
+      `event_id, check_in_at, check_out_at, events (*, organizations (name))`
+    )
+    .eq('user_id', userId)
+    .eq('status', 'joined');
+  return { data, error };
+}
+
+/**
+ * Retrieves events the current user has not yet joined
+ * @returns Events with organization details that the user hasn't joined
+ */
+export async function getUnjoinedEvents() {
+  const userId = await authService.getCurrentUserId();
+
+  const { data: joined, error: joinError } = await supabase
+    .from('joins')
+    .select('event_id')
+    .eq('user_id', userId);
+
+  if (joinError) return { data: null, error: joinError };
+
+  const joinedIds = joined?.map((j: any) => j.event_id) || [];
+
+  const query = supabase
+    .from('events')
+    .select(
+      `*,
+      organizations (
+        id,
+        name,
+        email,
+        phone,
+        verified
+      )`
+    )
+    .limit(100);
+
+  if (joinedIds.length > 0) {
+    const idList = `(${joinedIds.join(',')})`;
+    query.not('id', 'in', idList);
+  }
+
+  const { data, error } = await query;
+  return { data, error };
+}
+
+/**
+ * Creates a new event associated with the current organizer's organization
+ * @param event - Event fields excluding org_id and created_by
+ * @returns Newly created event record or error
+ */
+export async function createEvent(event: {
+  title: string;
+  description?: string;
+  cause: string;
+  starts_at: string;
+  ends_at: string;
+  capacity?: number;
+  lat?: number;
+  lng?: number;
+  image_url?: string;
+  location_name?: string;
+  address?: string;
+  location_notes?: string;
+}) {
+  const userId = await authService.getCurrentUserId();
+
+  // Lookup organization membership for the current user
+  const { data: membership, error: membershipError } = await supabase
+    .from('org_members')
+    .select('org_id')
+    .eq('user_id', userId)
+    .single();
+
+  if (membershipError) {
+    return { data: null, error: membershipError };
+  }
+
+  const { data, error } = await supabase
+    .from('events')
+    .insert({
+      org_id: membership.org_id,
+      created_by: userId,
+      ...event,
+    })
+    .select()
+    .single();
+
+  return { data, error };
 }

@@ -33,8 +33,8 @@ END,
   address text,
   location_notes text,
   CONSTRAINT events_pkey PRIMARY KEY (id),
-  CONSTRAINT events_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.organizations(id),
-  CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
+  CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
+  CONSTRAINT events_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.organizations(id)
 );
 CREATE TABLE public.group_members (
   group_id uuid NOT NULL,
@@ -43,8 +43,8 @@ CREATE TABLE public.group_members (
   role text DEFAULT 'member'::text,
   joined_at timestamp with time zone DEFAULT now(),
   CONSTRAINT group_members_pkey PRIMARY KEY (group_id, user_id),
-  CONSTRAINT group_members_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups(id),
-  CONSTRAINT group_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT group_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT group_members_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups(id)
 );
 CREATE TABLE public.groups (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -73,9 +73,9 @@ CREATE TABLE public.joins (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT joins_pkey PRIMARY KEY (id),
   CONSTRAINT joins_check_out_by_fkey FOREIGN KEY (check_out_by) REFERENCES public.profiles(id),
-  CONSTRAINT joins_check_in_by_fkey FOREIGN KEY (check_in_by) REFERENCES public.profiles(id),
+  CONSTRAINT joins_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id),
   CONSTRAINT joins_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT joins_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id)
+  CONSTRAINT joins_check_in_by_fkey FOREIGN KEY (check_in_by) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.org_members (
   org_id uuid NOT NULL,
@@ -105,8 +105,8 @@ CREATE TABLE public.points_ledger (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   hours integer DEFAULT 0,
   CONSTRAINT points_ledger_pkey PRIMARY KEY (id),
-  CONSTRAINT points_ledger_join_id_fkey FOREIGN KEY (join_id) REFERENCES public.joins(id),
-  CONSTRAINT points_ledger_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT points_ledger_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT points_ledger_join_id_fkey FOREIGN KEY (join_id) REFERENCES public.joins(id)
 );
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
@@ -137,6 +137,6 @@ CREATE TABLE public.user_badges (
   badge_id uuid NOT NULL,
   awarded_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT user_badges_pkey PRIMARY KEY (user_id, badge_id),
-  CONSTRAINT user_badges_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT user_badges_badge_id_fkey FOREIGN KEY (badge_id) REFERENCES public.badges(id)
+  CONSTRAINT user_badges_badge_id_fkey FOREIGN KEY (badge_id) REFERENCES public.badges(id),
+  CONSTRAINT user_badges_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
