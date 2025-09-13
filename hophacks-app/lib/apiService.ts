@@ -1288,11 +1288,7 @@ export async function getRecentActivity() {
     return { data: null, error };
   }
 }
-=======
- * Creates a join record for the current user on the specified event
- * @param eventId - The UUID of the event to join
- * @returns Result of the join insert operation
- */
+
 export async function joinEvent(eventId: string) {
   const { data, error } = await supabase
     .from('joins')
