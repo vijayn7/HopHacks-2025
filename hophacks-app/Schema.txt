@@ -63,7 +63,7 @@ CREATE TABLE public.joins (
   check_out_by uuid,
   check_in_geog USER-DEFINED,
   check_out_geog USER-DEFINED,
-  minutes integer,
+  minutes integer CHECK (minutes IS NULL OR minutes >= 0),
   points_awarded integer,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT joins_pkey PRIMARY KEY (id),
