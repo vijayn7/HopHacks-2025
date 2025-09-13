@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import type { ColorScheme } from '../constants/colors';
-import SpecificEventPage from './SpecificEventPage';
+import { joinEvent } from '../lib/apiService';
 
 export interface EventCallToActionButtonProps {
   eventId: string;
@@ -17,38 +17,48 @@ const EventCallToActionButton: React.FC<EventCallToActionButtonProps> = ({
   disabled = false,
   style,
 }) => {
-  const [showEventDetails, setShowEventDetails] = useState(false);
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const [joining, setJoining] = useState(false);
+  const [joined, setJoined] = useState(false);
+
+  const handleJoin = async () => {
+    setJoining(true);
+    const { error } = await joinEvent(eventId);
+    setJoining(false);
+
+    if (error) {
+      Alert.alert('Join Failed', 'Unable to join this event. Please try again later.');
+    } else {
+      setJoined(true);
+      Alert.alert('Joined', 'You have successfully joined this event.');
+    }
+  };
 
   const handlePress = () => {
     if (onPress) {
       onPress();
     } else {
-      // Show the event details modal
-      setShowEventDetails(true);
+      Alert.alert('Join Event', 'Are you sure you want to join this event?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Join', onPress: handleJoin },
+      ]);
     }
   };
 
-  return (
-    <>
-      <TouchableOpacity 
-        style={[styles.button, disabled && styles.buttonDisabled, style]}
-        onPress={handlePress}
-        disabled={disabled}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>
-          Learn More
-        </Text>
-      </TouchableOpacity>
+  const isDisabled = disabled || joining || joined;
 
-      <SpecificEventPage
-        eventId={eventId}
-        visible={showEventDetails}
-        onClose={() => setShowEventDetails(false)}
-      />
-    </>
+  return (
+    <TouchableOpacity
+      style={[styles.button, isDisabled && styles.buttonDisabled, style]}
+      onPress={handlePress}
+      disabled={isDisabled}
+      activeOpacity={0.8}
+    >
+      <Text style={[styles.buttonText, isDisabled && styles.buttonTextDisabled]}>
+        {joined ? 'Joined' : joining ? 'Joining...' : 'Join Event'}
+      </Text>
+    </TouchableOpacity>
   );
 };
 
@@ -76,3 +86,4 @@ const createStyles = (colors: ColorScheme) =>
       color: colors.textSecondary || '#999999',
     },
   });
+

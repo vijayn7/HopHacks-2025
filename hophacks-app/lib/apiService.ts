@@ -79,3 +79,17 @@ export async function updateUserEmail(email: string) {
   const { data, error } = await supabase.auth.updateUser({ email });
   return { data, error };
 }
+
+/**
+ * Creates a join record for the current user on the specified event
+ * @param eventId - The UUID of the event to join
+ * @returns Result of the join insert operation
+ */
+export async function joinEvent(eventId: string) {
+  const { data, error } = await supabase
+    .from('joins')
+    .insert({ event_id: eventId })
+    .select()
+    .single();
+  return { data, error };
+}
