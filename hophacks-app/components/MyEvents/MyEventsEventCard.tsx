@@ -225,7 +225,7 @@ const createStyles = (colors: ColorScheme) =>
     detailsRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'flex-start',
+      alignItems: 'flex-end',
       marginBottom: 12,
     },
     eventDetails: {
@@ -254,5 +254,6 @@ const createStyles = (colors: ColorScheme) =>
       backgroundColor: colors.primary,
       padding: 8,
       borderRadius: 8,
+      alignSelf: 'flex-end',
     },
   });
