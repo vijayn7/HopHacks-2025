@@ -21,6 +21,7 @@ export interface EventsEventCardProps {
   onPress?: () => void;
   showLearnMoreButton?: boolean;
   isOwner?: boolean;
+  onQRCodePress?: () => void;
 }
 
 const EventsEventCard: React.FC<EventsEventCardProps> = ({
@@ -38,6 +39,7 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
   onPress,
   showLearnMoreButton = true,
   isOwner = false,
+  onQRCodePress,
 }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -104,25 +106,36 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
         </Text>
       )}
       
-      <View style={styles.eventDetails}>
-        <View style={styles.eventDetailItem}>
-          <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
-          <Text style={styles.eventDetailText}>{getLocationText()}</Text>
-        </View>
-        <View style={styles.eventDetailItem}>
-          <Ionicons name="pricetag-outline" size={14} color={colors.textSecondary} />
-          <Text style={styles.eventDetailText}>{formatCause(cause)}</Text>
-        </View>
-        {capacity && (
+      <View style={styles.detailsRow}>
+        <View style={styles.eventDetails}>
           <View style={styles.eventDetailItem}>
-            <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
-            <Text style={styles.eventDetailText}>Cap: {capacity}</Text>
+            <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+            <Text style={styles.eventDetailText}>{getLocationText()}</Text>
           </View>
-        )}
-        <View style={styles.eventDetailItem}>
-          <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-          <Text style={styles.eventDetailText}>{formatEventTime(starts_at, ends_at)}</Text>
+          <View style={styles.eventDetailItem}>
+            <Ionicons name="pricetag-outline" size={14} color={colors.textSecondary} />
+            <Text style={styles.eventDetailText}>{formatCause(cause)}</Text>
+          </View>
+          {capacity && (
+            <View style={styles.eventDetailItem}>
+              <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
+              <Text style={styles.eventDetailText}>Cap: {capacity}</Text>
+            </View>
+          )}
+          <View style={styles.eventDetailItem}>
+            <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+            <Text style={styles.eventDetailText}>{formatEventTime(starts_at, ends_at)}</Text>
+          </View>
         </View>
+        {isOwner && onQRCodePress && (
+          <TouchableOpacity
+            style={styles.scanButton}
+            onPress={onQRCodePress}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="qr-code-outline" size={20} color={colors.textWhite} />
+          </TouchableOpacity>
+        )}
       </View>
       
       {showLearnMoreButton && (
@@ -200,8 +213,15 @@ const createStyles = (colors: ColorScheme) =>
       marginBottom: 12,
       lineHeight: 18,
     },
-    eventDetails: {
+    detailsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
       marginBottom: 16,
+    },
+    eventDetails: {
+      flex: 1,
+      marginRight: 12,
     },
     eventDetailItem: {
       flexDirection: 'row',
@@ -224,5 +244,11 @@ const createStyles = (colors: ColorScheme) =>
       color: colors.textWhite,
       fontSize: 14,
       fontWeight: '600',
+    },
+    scanButton: {
+      backgroundColor: colors.primary,
+      padding: 8,
+      borderRadius: 8,
+      alignSelf: 'flex-end',
     },
   });
