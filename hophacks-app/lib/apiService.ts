@@ -1302,7 +1302,7 @@ export async function checkInToEvent(eventId: string) {
   const userId = await authService.getCurrentUserId();
   const { data: join, error: joinError } = await supabase
     .from('joins')
-    .select('id, check_in_at')
+    .select('id, check_in_at, events(title)')
     .eq('event_id', eventId)
     .eq('user_id', userId)
     .single();
@@ -1316,7 +1316,7 @@ export async function checkInToEvent(eventId: string) {
     .from('joins')
     .update({ check_in_at: new Date().toISOString() })
     .eq('id', join.id)
-    .select()
+    .select('id, check_in_at, events(title)')
     .single();
   return { data, error };
 }
@@ -1325,20 +1325,69 @@ export async function checkOutFromEvent(eventId: string) {
   const userId = await authService.getCurrentUserId();
   const { data: join, error: joinError } = await supabase
     .from('joins')
-    .select('id')
+    .select('id, check_in_at, events(starts_at, ends_at, title)')
     .eq('event_id', eventId)
     .eq('user_id', userId)
     .single();
 
   if (joinError) return { data: null, error: joinError };
 
+  const checkOutTime = new Date().toISOString();
   const { data, error } = await supabase
     .from('joins')
-    .update({ check_out_at: new Date().toISOString() })
+    .update({ check_out_at: checkOutTime })
     .eq('id', join.id)
-    .select()
+    .select('id, check_in_at, check_out_at, events(starts_at, ends_at, title)')
     .single();
-  return { data, error };
+
+  if (error || !data) return { data: null, error };
+
+  // Calculate attendance duration in minutes
+  const checkIn = data.check_in_at ? new Date(data.check_in_at) : null;
+  const checkOut = data.check_out_at ? new Date(data.check_out_at) : null;
+  const minutes =
+    checkIn && checkOut ? Math.max(0, Math.floor((checkOut.getTime() - checkIn.getTime()) / 60000)) : 0;
+
+  const eventData: any = Array.isArray((data as any).events)
+    ? (data as any).events[0]
+    : (data as any).events;
+  const eventStart = eventData?.starts_at ? new Date(eventData.starts_at) : null;
+  const eventEnd = eventData?.ends_at ? new Date(eventData.ends_at) : null;
+  const totalMinutes =
+    eventStart && eventEnd ? Math.max(0, Math.floor((eventEnd.getTime() - eventStart.getTime()) / 60000)) : 0;
+
+  const ratio = totalMinutes > 0 ? Math.min(minutes / totalMinutes, 1) : 0;
+  const points = Math.ceil((ratio * 100) / 5) * 5;
+
+  // Update join record with minutes and points awarded
+  await supabase
+    .from('joins')
+    .update({ minutes, points_awarded: points })
+    .eq('id', data.id);
+
+  // Insert into points ledger
+  await supabase.from('points_ledger').insert({
+    user_id: userId,
+    join_id: data.id,
+    delta_points: points,
+    reason: eventData?.title || 'Event participation',
+    hours: Math.round(minutes / 60),
+  });
+
+  // Update user total points
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('total_points')
+    .eq('id', userId)
+    .single();
+  if (profile) {
+    await supabase
+      .from('profiles')
+      .update({ total_points: (profile.total_points || 0) + points })
+      .eq('id', userId);
+  }
+
+  return { data, error: null };
 }
 
 /**
