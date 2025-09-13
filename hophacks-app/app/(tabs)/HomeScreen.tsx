@@ -4,7 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HomeEventCard from '../../components/Home/HomeEventCard';
-import { getUserInfoById } from '@/lib/apiService';
+import { getUserInfoById, getEventRecommendations } from '@/lib/apiService';
 import { authService } from '../../lib/authService';
 
 const HomeScreen = () => {
@@ -19,6 +19,7 @@ const HomeScreen = () => {
     pointsToNextTier: 100,
     tierProgress: 0,
   });
+  const [suggestedEvents, setSuggestedEvents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -64,40 +65,59 @@ const HomeScreen = () => {
   };
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndEvents = async () => {
       try {
         setIsLoading(true);
 
-        const { data, error } = await getUserInfoById();
+        // Fetch user data
+        const { data: userData, error: userError } = await getUserInfoById();
         
-        if (error) {
-          console.log('Error fetching user:', error);
-          setIsLoading(false);
-          return;
-        }
-
-        if (data) {
-          
-          const tierInfo = getTierInfo(data.total_points || 0);
+        if (userError) {
+          console.log('Error fetching user:', userError);
+        } else if (userData) {
+          const tierInfo = getTierInfo(userData.total_points || 0);
           
           setUser({
-            name: data.display_name || "Volunteer",
-            streak: data.current_streak_weeks || 0,
-            totalPoints: data.total_points || 0,
+            name: userData.display_name || "Volunteer",
+            streak: userData.current_streak_weeks || 0,
+            totalPoints: userData.total_points || 0,
             currentTier: tierInfo.currentTier,
             nextTier: tierInfo.nextTier,
             pointsToNextTier: tierInfo.pointsToNextTier,
             tierProgress: tierInfo.tierProgress,
           });
         }
+
+        // Fetch event recommendations
+        const { data: eventsData, error: eventsError } = await getEventRecommendations();
+        
+        if (eventsError) {
+          console.log('Error fetching events:', eventsError);
+        } else if (eventsData) {
+          // Transform the data to match the expected format
+          const transformedEvents = eventsData.map((event) => ({
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            cause: event.cause,
+            starts_at: event.starts_at,
+            ends_at: event.ends_at,
+            lat: event.lat,
+            lng: event.lng,
+            capacity: event.capacity,
+            org_name: event.organizations?.name || 'Unknown Organization',
+            distance: '-- mi away', // You might want to calculate this based on user location
+          }));
+          setSuggestedEvents(transformedEvents);
+        }
       } catch (error) {
-        console.log('Error in fetchUser:', error);
+        console.log('Error in fetchUserAndEvents:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchUser();
+    fetchUserAndEvents();
   }, []);
 
   const handleSignOut = async () => {
@@ -125,48 +145,6 @@ const HomeScreen = () => {
       ]
     );
   };
-
-  const suggestedEvents = [
-    {
-      id: '1',
-      title: 'Food Pantry Packing',
-      description: 'Help pack and distribute food boxes for families in need during our weekly food distribution event.',
-      cause: 'food_security' as const,
-      starts_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours from now (2 PM today)
-      ends_at: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString(), // 9 hours from now (5 PM today)
-      lat: 42.2808,
-      lng: -83.7430,
-      capacity: 20,
-      org_name: 'Ann Arbor Food Bank',
-      distance: '0.5 mi away',
-    },
-    {
-      id: '2',
-      title: 'Animal Shelter Cleanup',
-      description: 'Join us for our weekly shelter maintenance and animal care activities. Help make a difference for our furry friends!',
-      cause: 'animal_welfare' as const,
-      starts_at: new Date(Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(), // Tomorrow 10 AM
-      ends_at: new Date(Date.now() + 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000).toISOString(), // Tomorrow 1 PM
-      lat: 42.2925,
-      lng: -83.7351,
-      capacity: 15,
-      org_name: 'Humane Society',
-      distance: '1.2 mi away',
-    },
-    {
-      id: '3',
-      title: 'Community Garden',
-      description: 'Help maintain our community garden and learn about sustainable growing practices.',
-      cause: 'environment' as const,
-      starts_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000).toISOString(), // Saturday 9 AM
-      ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000).toISOString(), // Saturday 12 PM
-      lat: 42.2776,
-      lng: -83.7382,
-      capacity: 25,
-      org_name: 'Green Thumb Initiative',
-      distance: '0.8 mi away',
-    },
-  ];
 
   const recentActivity = [
     {
@@ -239,7 +217,9 @@ const HomeScreen = () => {
       {/* For You Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>For You</Text>
-        <Text style={styles.sectionSubtitle}>Happening Today Near You</Text>
+        <Text style={styles.sectionSubtitle}>
+          {suggestedEvents.length > 0 ? 'Recommended Events Near You' : 'Loading recommendations...'}
+        </Text>
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}

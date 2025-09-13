@@ -45,6 +45,22 @@ export async function getEventById(eventId: string) {
   return { data, error };
 }
 
+export async function getEventRecommendations() {
+  const { data, error } = await supabase
+    .from('events')
+    .select(`
+      *,
+      organizations (
+        id,
+        name,
+        email,
+        phone,
+        verified
+      )
+    `)
+  return { data, error };
+}
+
 export async function getUserInfoById() {
   const {data, error} = await supabase
     .from('profiles')
