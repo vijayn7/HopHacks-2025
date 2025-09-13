@@ -33,6 +33,7 @@ const EventsScreen = () => {
   const [eventPageVisible, setEventPageVisible] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const animations = useRef<Record<string, { slide: Animated.Value; bubble: Animated.Value }>>({});
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -45,14 +46,22 @@ const EventsScreen = () => {
   }, []);
 
   useEffect(() => {
-    fetchEvents();
     checkRole();
   }, []);
 
+  useEffect(() => {
+    if (currentUserId) {
+      fetchEvents();
+    }
+  }, [currentUserId]);
+
   const checkRole = async () => {
     const { data } = await getCurrentUserProfile();
-    if (data?.role === 'organizer') {
-      setIsOrganizer(true);
+    if (data) {
+      if (data.role === 'organizer') {
+        setIsOrganizer(true);
+      }
+      setCurrentUserId(data.id);
     }
   };
 
@@ -83,8 +92,9 @@ const EventsScreen = () => {
           capacity: event.capacity,
           org_name: event.organizations?.name || 'Unknown Organization',
           distance: event.lat && event.lng ? 'Near you' : 'Location TBD', // TODO: Calculate actual distance
+          isOwner: event.created_by === currentUserId,
         }));
-        
+
         setEvents(transformedEvents);
       }
     } catch (err) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ToastAndroid, Platform } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { createEvent } from '../../lib/apiService';
@@ -26,8 +26,25 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({ visible, onClose, o
   const [address, setAddress] = useState('');
   const [locationNotes, setLocationNotes] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const showToast = (message: string) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert(message);
+    }
+  };
 
   const handleCreate = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!title.trim()) newErrors.title = 'Title is required';
+    if (!cause.trim()) newErrors.cause = 'Cause is required';
+    if (!startsAt.trim()) newErrors.startsAt = 'Start time is required';
+    if (!endsAt.trim()) newErrors.endsAt = 'End time is required';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
     const { error } = await createEvent({
       title,
       description,
@@ -43,22 +60,27 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({ visible, onClose, o
       location_notes: locationNotes || undefined,
     });
 
-    if (!error) {
-      onCreated();
-      onClose();
-      setTitle('');
-      setDescription('');
-      setCause('');
-      setStartsAt('');
-      setEndsAt('');
-      setCapacity('');
-      setLatitude('');
-      setLongitude('');
-      setLocationName('');
-      setAddress('');
-      setLocationNotes('');
-      setImageUrl('');
+    if (error) {
+      showToast('Failed to create event');
+      return;
     }
+
+    showToast('Event created');
+    onCreated();
+    onClose();
+    setTitle('');
+    setDescription('');
+    setCause('');
+    setStartsAt('');
+    setEndsAt('');
+    setCapacity('');
+    setLatitude('');
+    setLongitude('');
+    setLocationName('');
+    setAddress('');
+    setLocationNotes('');
+    setImageUrl('');
+    setErrors({});
   };
 
   return (
@@ -68,12 +90,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({ visible, onClose, o
           <ScrollView>
             <Text style={styles.header}>Create Event</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Title"
+              style={[styles.input, errors.title && styles.errorInput]}
+              placeholder="Title*"
               placeholderTextColor={colors.textSecondary}
               value={title}
               onChangeText={setTitle}
             />
+            {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
             <TextInput
               style={styles.input}
               placeholder="Description"
@@ -82,26 +105,29 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({ visible, onClose, o
               onChangeText={setDescription}
             />
             <TextInput
-              style={styles.input}
-              placeholder="Cause"
+              style={[styles.input, errors.cause && styles.errorInput]}
+              placeholder="Cause*"
               placeholderTextColor={colors.textSecondary}
               value={cause}
               onChangeText={setCause}
             />
+            {errors.cause && <Text style={styles.errorText}>{errors.cause}</Text>}
             <TextInput
-              style={styles.input}
-              placeholder="Starts At (ISO)"
+              style={[styles.input, errors.startsAt && styles.errorInput]}
+              placeholder="Starts At (ISO)*"
               placeholderTextColor={colors.textSecondary}
               value={startsAt}
               onChangeText={setStartsAt}
             />
+            {errors.startsAt && <Text style={styles.errorText}>{errors.startsAt}</Text>}
             <TextInput
-              style={styles.input}
-              placeholder="Ends At (ISO)"
+              style={[styles.input, errors.endsAt && styles.errorInput]}
+              placeholder="Ends At (ISO)*"
               placeholderTextColor={colors.textSecondary}
               value={endsAt}
               onChangeText={setEndsAt}
             />
+            {errors.endsAt && <Text style={styles.errorText}>{errors.endsAt}</Text>}
             <TextInput
               style={styles.input}
               placeholder="Capacity"
@@ -196,6 +222,15 @@ const createStyles = (colors: ColorScheme) =>
       padding: 8,
       marginBottom: 12,
       color: colors.textPrimary,
+    },
+    errorInput: {
+      borderColor: colors.error || '#FF6B6B',
+    },
+    errorText: {
+      color: colors.error || '#FF6B6B',
+      marginTop: -8,
+      marginBottom: 12,
+      fontSize: 12,
     },
     buttonRow: {
       flexDirection: 'row',
