@@ -15,30 +15,16 @@ export class AuthService {
 
   async initializeAuth(): Promise<boolean> {
     try {
-      // Check if user is already authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      this.isAuthenticated = !!session;
       if (session) {
         console.log('User already authenticated:', session.user.email);
-        this.isAuthenticated = true;
-        return true;
       }
 
-      // If no session, sign in
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: process.env.EXPO_PUBLIC_USER_EMAIL || '',
-        password: process.env.EXPO_PUBLIC_USER_PASSWORD || '',
-      });
-
-      if (error) {
-        console.log('Authentication error:', error);
-        this.isAuthenticated = false;
-        return false;
-      }
-
-      console.log('User authenticated successfully:', data.user?.email);
-      this.isAuthenticated = true;
-      return true;
+      return this.isAuthenticated;
     } catch (error) {
       console.log('Auth initialization error:', error);
       this.isAuthenticated = false;
@@ -48,6 +34,42 @@ export class AuthService {
 
   isUserAuthenticated(): boolean {
     return this.isAuthenticated;
+  }
+
+  async signIn(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        console.log('Sign in error:', error);
+        this.isAuthenticated = false;
+        return { success: false, error: error.message };
+      }
+
+      this.isAuthenticated = true;
+      return { success: true };
+    } catch (error: any) {
+      console.log('Sign in exception:', error);
+      this.isAuthenticated = false;
+      return { success: false, error: error.message };
+    }
+  }
+
+  async signUp(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase.auth.signUp({ email, password });
+
+      if (error) {
+        console.log('Sign up error:', error);
+        return { success: false, error: error.message };
+      }
+
+      // Automatically sign in after successful sign up
+      return await this.signIn(email, password);
+    } catch (error: any) {
+      console.log('Sign up exception:', error);
+      return { success: false, error: error.message };
+    }
   }
 
   async getCurrentUserId(): Promise<string | null> {

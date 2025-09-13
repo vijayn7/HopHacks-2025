@@ -1,11 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HomeEventCard from '../../components/Home/HomeEventCard';
 import { getUserInfoById, getEventRecommendations } from '@/lib/apiService';
-import { authService } from '../../lib/authService';
 
 const HomeScreen = () => {
   // Mock data - replace with real data later
@@ -71,12 +70,12 @@ const HomeScreen = () => {
 
         // Fetch user data
         const { data: userData, error: userError } = await getUserInfoById();
-        
+
         if (userError) {
           console.log('Error fetching user:', userError);
         } else if (userData) {
           const tierInfo = getTierInfo(userData.total_points || 0);
-          
+
           setUser({
             name: userData.display_name || "Volunteer",
             streak: userData.current_streak_weeks || 0,
@@ -90,7 +89,7 @@ const HomeScreen = () => {
 
         // Fetch event recommendations
         const { data: eventsData, error: eventsError } = await getEventRecommendations();
-        
+
         if (eventsError) {
           console.log('Error fetching events:', eventsError);
         } else if (eventsData) {
@@ -116,35 +115,9 @@ const HomeScreen = () => {
         setIsLoading(false);
       }
     };
-    
+
     fetchUserAndEvents();
   }, []);
-
-  const handleSignOut = async () => {
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Sign Out",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await authService.signOut();
-              console.log('User signed out successfully');
-              // You could add navigation logic here if needed
-            } catch (error) {
-              console.log('Error signing out:', error);
-            }
-          }
-        }
-      ]
-    );
-  };
 
   const recentActivity = [
     {
@@ -264,12 +237,6 @@ const HomeScreen = () => {
       </View>
 
       {/* Sign Out Button - For Testing */}
-      <View style={styles.signOutSection}>
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Ionicons name="log-out-outline" size={20} color={colors.error} />
-          <Text style={styles.signOutText}>Sign Out (Testing)</Text>
-        </TouchableOpacity>
-      </View>
     </ScrollView>
   )
 }
@@ -489,34 +456,4 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     paddingVertical: 12,
   },
   // Sign Out Button Styles
-  signOutSection: {
-    marginHorizontal: 16,
-    marginBottom: 24,
-    marginTop: 16,
-  },
-  signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.error,
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  signOutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.error,
-    marginLeft: 8,
-  },
 });
