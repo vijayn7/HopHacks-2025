@@ -49,7 +49,6 @@ const CustomTabBar: React.FC<TabBarProps> = ({ activeTab, onTabPress }) => {
           key={tab.id}
           style={[
             styles.tabButton,
-            tab.isProminent && styles.prominentTab,
             activeTab === tab.id && styles.activeTab,
           ]}
           onPress={() => onTabPress(tab.id)}
@@ -57,18 +56,16 @@ const CustomTabBar: React.FC<TabBarProps> = ({ activeTab, onTabPress }) => {
         >
           <View style={[
             styles.iconContainer,
-            tab.isProminent && styles.prominentIconContainer,
             activeTab === tab.id && styles.activeIconContainer,
           ]}>
             <Ionicons
               name={activeTab === tab.id ? tab.activeIcon : tab.icon}
-              size={tab.isProminent ? 24 : 20}
-              color={activeTab === tab.id ? Colors.textWhite : tab.isProminent ? Colors.primary : Colors.tabBarInactive}
+              size={20}
+              color={activeTab === tab.id ? Colors.textWhite : Colors.tabBarInactive}
             />
           </View>
           <Text style={[
             styles.tabLabel,
-            tab.isProminent && styles.prominentLabel,
             activeTab === tab.id && styles.activeLabel,
           ]}>
             {tab.label}
@@ -103,10 +100,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 4,
   },
-  prominentTab: {
-    flex: 1.2,
-    marginHorizontal: 4,
-  },
   activeTab: {
     // Additional styling for active tab if needed
   },
@@ -118,14 +111,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 2,
   },
-  prominentIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-  },
   activeIconContainer: {
     backgroundColor: Colors.primary,
   },
@@ -134,11 +119,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: Colors.tabBarInactive,
     textAlign: 'center',
-  },
-  prominentLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: Colors.primary,
   },
   activeLabel: {
     color: Colors.tabBarActive,

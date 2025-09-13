@@ -3,6 +3,7 @@ import { Text, View, StyleSheet, SafeAreaView } from "react-native";
 import CustomTabBar from '../components/CustomTabBar';
 import EventsList from '../components/EventsList';
 import { Colors } from '../constants/colors';
+import HomeScreen from './(tabs)/HomeScreen';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState('home');
@@ -15,7 +16,7 @@ export default function Index() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Text style={styles.tabContent}>Home Screen - Coming Soon!</Text>;
+        return <HomeScreen />;
       case 'events':
         return (
           <View style={{ flex: 1, alignSelf: 'stretch', width: '100%' }}>
@@ -29,16 +30,14 @@ export default function Index() {
       case 'profile':
         return <Text style={styles.tabContent}>Profile Screen - Coming Soon!</Text>;
       default:
-        return <Text style={styles.tabContent}>Home Screen - Coming Soon!</Text>;
+        return <HomeScreen />;
     }
   };
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          {renderTabContent()}
-        </View>
+        {renderTabContent()}
       </SafeAreaView>
       <CustomTabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </View>
