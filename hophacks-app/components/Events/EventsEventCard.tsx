@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../constants/colors';
+import { Colors } from '../../constants/colors';
+import EventCallToActionButton from '../EventCallToActionButton';
 
 // Interface for EventsScreen event cards (full-width, detailed view)
 export interface EventsEventCardProps {
@@ -67,14 +68,6 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
     return distance;
   };
 
-  const handlePress = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      console.log(`Joining event: ${title}`);
-    }
-  };
-
   return (
     <TouchableOpacity 
       style={styles.eventCard} 
@@ -122,9 +115,7 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
       </View>
       
       {showJoinButton && (
-        <TouchableOpacity style={styles.joinButton} onPress={handlePress}>
-          <Text style={styles.joinButtonText}>Join Event</Text>
-        </TouchableOpacity>
+        <EventCallToActionButton eventId={id} />
       )}
     </TouchableOpacity>
   );
@@ -193,17 +184,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
     marginLeft: 6,
-  },
-  joinButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  joinButtonText: {
-    color: Colors.textWhite,
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

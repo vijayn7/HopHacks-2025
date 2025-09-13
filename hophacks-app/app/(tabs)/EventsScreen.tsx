@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Colors } from '../../constants/colors';
-import EventsEventCard, { EventsEventCardProps } from '../../components/EventsEventCard';
-import { supabase } from '../../lib/supabase';
+import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
+import { getAllEvents } from '../../lib/apiService';
 
 interface Event extends EventsEventCardProps {
   org_name: string;
@@ -23,36 +23,17 @@ const EventsScreen = () => {
       setLoading(true);
       setError(null);
       
-      // Fetch events with organization data
-      const { data, error } = await supabase
-        .from('events')
-        .select(`
-          id,
-          title,
-          description,
-          cause,
-          starts_at,
-          ends_at,
-          lat,
-          lng,
-          capacity,
-          is_published,
-          organizations (
-            name
-          )
-        `)
-        .eq('is_published', true)
-        .gte('ends_at', new Date().toISOString()) // Only future events
-        .order('starts_at', { ascending: true });
+      // Fetch events using the API service
+      const { data, error } = await getAllEvents();
 
       if (error) {
-        setError(error.message);
+        setError(error.message || 'Failed to fetch events');
         return;
       }
 
       if (data) {
         // Transform the data to match our EventCard interface
-        const transformedEvents: Event[] = data.map(event => ({
+        const transformedEvents: Event[] = data.map((event: any) => ({
           id: event.id,
           title: event.title,
           description: event.description,
@@ -62,7 +43,7 @@ const EventsScreen = () => {
           lat: event.lat,
           lng: event.lng,
           capacity: event.capacity,
-          org_name: (event.organizations as any)?.name || 'Unknown Organization',
+          org_name: event.organizations?.name || 'Unknown Organization',
           distance: event.lat && event.lng ? 'Near you' : 'Location TBD', // TODO: Calculate actual distance
         }));
         
@@ -73,11 +54,6 @@ const EventsScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleEventPress = (eventId: string) => {
-    console.log('Event pressed:', eventId);
-    // TODO: Navigate to event details screen
   };
 
   if (loading) {
@@ -110,7 +86,6 @@ const EventsScreen = () => {
             <View key={event.id} style={styles.eventWrapper}>
               <EventsEventCard
                 {...event}
-                onPress={() => handleEventPress(event.id)}
               />
             </View>
           ))

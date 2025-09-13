@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Act
 import React, { useState, useEffect } from 'react'
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import HomeEventCard from '../../components/HomeEventCard';
+import HomeEventCard from '../../components/Home/HomeEventCard';
 import { getUserInfoById } from '@/lib/apiService';
 import { authService } from '../../lib/authService';
 
