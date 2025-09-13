@@ -4,52 +4,82 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import type { ColorScheme } from '../constants/colors';
-import { router, useLocalSearchParams } from 'expo-router';
-import { getGroupActivityFeed } from '../lib/apiService';
+import { useLocalSearchParams } from 'expo-router';
+import { getGroupActivityFeed, getAllUserActivity } from '../lib/apiService';
 
 interface GroupActivity {
   id: string;
   memberName: string;
   action: string;
   points: number;
+  hours?: number;
   timestamp: string;
   eventName?: string;
+  organization?: string;
   avatar?: string;
 }
 
 const ActivityFeedScreen = () => {
-  const { groupId } = useLocalSearchParams();
+  const { groupId, userId } = useLocalSearchParams();
   const [activities, setActivities] = useState<GroupActivity[]>([]);
   const [loading, setLoading] = useState(true);
-  const { colors, theme } = useTheme();
+  const [isUserActivity, setIsUserActivity] = useState(false);
+  const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
     const loadActivityFeed = async () => {
       try {
-        if (!groupId) {
-          console.error('No group ID provided');
-          Alert.alert('Error', 'No group selected. Please go back and select a group.');
-          return;
-        }
+        if (userId === 'current') {
+          // Load current user's activity from entire history
+          setIsUserActivity(true);
+          const { data, error } = await getAllUserActivity();
+          
+          if (error) {
+            console.error('Error loading user activity:', error);
+            Alert.alert('Error', 'Failed to load your activity. Please try again.');
+            return;
+          }
 
-        const { data, error } = await getGroupActivityFeed(groupId as string, 20, false); // false = show all activities, not just current month
-        
-        if (error) {
-          console.error('Error loading activity feed:', error);
-          Alert.alert('Error', 'Failed to load activity feed. Please try again.');
-          return;
-        }
+          if (data) {
+            // Transform user activity data to match the expected format
+            const transformedActivities = data.map((activity: any) => ({
+              id: activity.id,
+              memberName: activity.event, // Show event name directly instead of "You"
+              action: 'completed',
+              points: activity.points,
+              hours: activity.hours, // Include hours for display
+              timestamp: activity.date,
+              eventName: activity.event,
+              organization: activity.organization, // Include organization for conditional display
+              avatar: undefined
+            }));
+            setActivities(transformedActivities);
+          }
+        } else if (groupId) {
+          // Load group activity
+          setIsUserActivity(false);
+          const { data, error } = await getGroupActivityFeed(groupId as string, 20, false); // false = show all activities, not just current month
+          
+          if (error) {
+            console.error('Error loading activity feed:', error);
+            Alert.alert('Error', 'Failed to load activity feed. Please try again.');
+            return;
+          }
 
-        if (data) {
-          setActivities(data);
+          if (data) {
+            setActivities(data);
+          }
+        } else {
+          console.error('No group ID or user ID provided');
+          Alert.alert('Error', 'No group or user selected. Please go back and try again.');
+          return;
         }
       } catch (error) {
         console.error('Error loading activity feed:', error);
@@ -60,7 +90,7 @@ const ActivityFeedScreen = () => {
     };
 
     loadActivityFeed();
-  }, [groupId]);
+  }, [groupId, userId]);
 
   const getActivityIcon = (action: string) => {
     if (action.includes('completed') || action.includes('finished')) {
@@ -93,7 +123,12 @@ const ActivityFeedScreen = () => {
           <View style={styles.emptyContainer}>
             <Ionicons name="time-outline" size={64} color={colors.textSecondary} />
             <Text style={styles.emptyTitle}>No Activity Yet</Text>
-            <Text style={styles.emptySubtitle}>Group members haven't completed any activities recently.</Text>
+            <Text style={styles.emptySubtitle}>
+              {isUserActivity 
+                ? "You haven't completed any activities recently. Ready to make a difference?" 
+                : "Group members haven't completed any activities recently."
+              }
+            </Text>
           </View>
         ) : (
           activities.map((activity) => (
@@ -107,14 +142,28 @@ const ActivityFeedScreen = () => {
               </View>
               
               <View style={styles.activityContent}>
-                <Text style={styles.activityText}>
-                  <Text style={styles.memberName}>{activity.memberName}</Text>{' '}
-                  {activity.action}{' '}
-                  <Text style={styles.eventName}>{activity.eventName}</Text>
-                </Text>
+                {isUserActivity ? (
+                  // For user activity, just show the event name
+                  <Text style={styles.eventName}>{activity.memberName}</Text>
+                ) : (
+                  // For group activity, show member name + action + event name
+                  <Text style={styles.activityText}>
+                    <Text style={styles.memberName}>{activity.memberName}</Text>{' '}
+                    {activity.action}{' '}
+                    <Text style={styles.eventName}>{activity.eventName}</Text>
+                  </Text>
+                )}
+                {activity.organization && activity.organization.trim() !== '' && (
+                  <Text style={styles.organizationText}>{activity.organization}</Text>
+                )}
                 <View style={styles.activityMeta}>
                   <Text style={styles.activityPoints}>+{activity.points} points</Text>
-                  <Text style={styles.activityTime}>{activity.timestamp}</Text>
+                  <View style={styles.activityTimeContainer}>
+                    {isUserActivity && activity.hours && (
+                      <Text style={styles.activityHours}>{activity.hours}h</Text>
+                    )}
+                    <Text style={styles.activityTime}>{activity.timestamp}</Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -193,6 +242,11 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     fontWeight: '500',
     color: colors.textPrimary,
   },
+  organizationText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
   activityMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -202,6 +256,15 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.success,
+  },
+  activityTimeContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+  },
+  activityHours: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 2,
   },
   activityTime: {
     fontSize: 14,

@@ -1,11 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HomeEventCard from '../../components/Home/HomeEventCard';
-import { getUserInfoById, getEventRecommendations } from '@/lib/apiService';
+import { getUserInfoById, getEventRecommendations, getRecentActivity, calculateUserTotalPoints, calculateUserWeeklyStreak } from '@/lib/apiService';
 import { authService } from '../../lib/authService';
+import { router } from 'expo-router';
 
 const HomeScreen = () => {
   // Mock data - replace with real data later
@@ -20,6 +21,7 @@ const HomeScreen = () => {
     tierProgress: 0,
   });
   const [suggestedEvents, setSuggestedEvents] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -69,23 +71,36 @@ const HomeScreen = () => {
       try {
         setIsLoading(true);
 
-        // Fetch user data
+        // Fetch user basic data (name only)
         const { data: userData, error: userError } = await getUserInfoById();
+        
+        // Calculate points and streak from points_ledger
+        const { data: totalPoints, error: pointsError } = await calculateUserTotalPoints();
+        const { data: weeklyStreak, error: streakError } = await calculateUserWeeklyStreak();
         
         if (userError) {
           console.log('Error fetching user:', userError);
         } else if (userData) {
-          const tierInfo = getTierInfo(userData.total_points || 0);
+          const calculatedPoints = totalPoints || 0;
+          const calculatedStreak = weeklyStreak || 0;
+          const tierInfo = getTierInfo(calculatedPoints);
           
           setUser({
             name: userData.display_name || "Volunteer",
-            streak: userData.current_streak_weeks || 0,
-            totalPoints: userData.total_points || 0,
+            streak: calculatedStreak,
+            totalPoints: calculatedPoints,
             currentTier: tierInfo.currentTier,
             nextTier: tierInfo.nextTier,
             pointsToNextTier: tierInfo.pointsToNextTier,
             tierProgress: tierInfo.tierProgress,
           });
+        }
+        
+        if (pointsError) {
+          console.log('Error calculating points:', pointsError);
+        }
+        if (streakError) {
+          console.log('Error calculating streak:', streakError);
         }
 
         // Fetch event recommendations
@@ -110,6 +125,19 @@ const HomeScreen = () => {
           }));
           setSuggestedEvents(transformedEvents);
         }
+
+        // Fetch recent activity
+        const { data: activityData, error: activityError } = await getRecentActivity();
+        
+        if (activityError) {
+          console.log('Error fetching recent activity:', activityError);
+        } else if (activityData) {
+          console.log('Setting recent activity data:', activityData);
+          setRecentActivity(activityData);
+        } else {
+          console.log('No recent activity data received, setting empty array');
+          setRecentActivity([]);
+        }
       } catch (error) {
         console.log('Error in fetchUserAndEvents:', error);
       } finally {
@@ -119,6 +147,10 @@ const HomeScreen = () => {
     
     fetchUserAndEvents();
   }, []);
+
+  const handleViewAllActivity = () => {
+    router.push('/activity-feed?userId=current');
+  };
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -146,24 +178,6 @@ const HomeScreen = () => {
     );
   };
 
-  const recentActivity = [
-    {
-      id: 1,
-      event: "Soup Kitchen Volunteer",
-      organization: "Community Kitchen",
-      date: "Yesterday",
-      points: 45,
-      hours: 3,
-    },
-    {
-      id: 2,
-      event: "Beach Cleanup",
-      organization: "Ocean Conservation",
-      date: "3 days ago",
-      points: 30,
-      hours: 2,
-    },
-  ];
 
   // Loading screen component
   const LoadingScreen = () => (
@@ -239,7 +253,13 @@ const HomeScreen = () => {
 
       {/* Recent Activity */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <TouchableOpacity onPress={handleViewAllActivity} style={styles.seeAllButton}>
+            <Text style={styles.seeAllText}>See All</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
         <View style={styles.activityList}>
           {recentActivity.map((activity) => (
             <View key={activity.id} style={styles.activityItem}>
@@ -248,7 +268,9 @@ const HomeScreen = () => {
               </View>
               <View style={styles.activityContent}>
                 <Text style={styles.activityEvent}>{activity.event}</Text>
-                <Text style={styles.activityOrganization}>{activity.organization}</Text>
+                {activity.organization && activity.organization.trim() !== '' && (
+                  <Text style={styles.activityOrganization}>{activity.organization}</Text>
+                )}
                 <Text style={styles.activityDate}>{activity.date}</Text>
               </View>
               <View style={styles.activityStats}>
@@ -411,11 +433,28 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    marginBottom: 4,
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  seeAllText: {
+    fontSize: 16,
+    color: colors.primary,
+    fontWeight: '600',
+    marginRight: 4,
   },
   sectionSubtitle: {
     fontSize: 14,

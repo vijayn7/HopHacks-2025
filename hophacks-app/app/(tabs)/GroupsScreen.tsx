@@ -11,8 +11,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { getUserGroups, getTopGroupMember, createGroup, joinGroup } from '../../lib/apiService';
+import CreateGroupModal from '../../components/CreateGroupModal';
+import InviteCodeModal from '../../components/InviteCodeModal';
 
 interface GroupSummary {
   id: string;
@@ -23,7 +25,6 @@ interface GroupSummary {
   progressPercentage: number;
   description: string;
   isAdmin: boolean;
-  isCreator: boolean;
   role: string;
   topMember: {
     name: string;
@@ -35,98 +36,89 @@ interface GroupSummary {
 const GroupsScreen = () => {
   const [groups, setGroups] = useState<GroupSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [createdGroup, setCreatedGroup] = useState<any>(null);
   const { colors, theme } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   // Load groups from database
-  useEffect(() => {
-    const loadGroups = async () => {
-      try {
-        setLoading(true);
-        const { data: groupsData, error } = await getUserGroups();
-        
-        if (error) {
-          console.error('Error loading groups:', error);
-          Alert.alert('Error', 'Failed to load groups. Please try again.');
-          return;
-        }
-
-        if (groupsData) {
-          // Load top member for each group
-          const groupsWithTopMembers = await Promise.all(
-            groupsData.map(async (group) => {
-              const { data: topMember } = await getTopGroupMember(group.id);
-              return {
-                ...group,
-                topMember: topMember || { name: 'No activity yet' }
-              };
-            })
-          );
-          
-          setGroups(groupsWithTopMembers);
-        }
-      } catch (error) {
+  const loadGroups = async () => {
+    try {
+      setLoading(true);
+      const { data: groupsData, error } = await getUserGroups();
+      
+      if (error) {
         console.error('Error loading groups:', error);
         Alert.alert('Error', 'Failed to load groups. Please try again.');
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
 
+      if (groupsData) {
+        // Load top member for each group
+        const groupsWithTopMembers = await Promise.all(
+          groupsData.map(async (group) => {
+            const { data: topMember } = await getTopGroupMember(group.id);
+            return {
+              ...group,
+              topMember: topMember || { name: 'No activity yet' }
+            };
+          })
+        );
+        
+        setGroups(groupsWithTopMembers);
+      }
+    } catch (error) {
+      console.error('Error loading groups:', error);
+      Alert.alert('Error', 'Failed to load groups. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadGroups();
   }, []);
+
+  // Reload groups when screen comes into focus (e.g., returning from group dashboard)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadGroups();
+    }, [])
+  );
 
   const handleGroupPress = (groupId: string) => {
     router.push(`/group-dashboard/${groupId}`);
   };
 
   const handleCreateGroup = () => {
-    Alert.prompt(
-      'Create Group',
-      'Enter group name:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Create', 
-          onPress: async (groupName?: string) => {
-            if (!groupName?.trim()) return;
-            
-            try {
-              const { data, error } = await createGroup({
-                name: groupName.trim(),
-                description: `A group created by ${groupName.trim()}`,
-                monthly_goal: 10000
-              });
-              
-              if (error) {
-                Alert.alert('Error', (error as any).message || 'Failed to create group');
-                return;
-              }
-              
-              // Refresh the groups list
-              const { data: groupsData } = await getUserGroups();
-              if (groupsData) {
-                const groupsWithTopMembers = await Promise.all(
-                  groupsData.map(async (group) => {
-                    const { data: topMember } = await getTopGroupMember(group.id);
-                    return {
-                      ...group,
-                      topMember: topMember || { name: 'No activity yet' }
-                    };
-                  })
-                );
-                setGroups(groupsWithTopMembers);
-              }
-              
-              Alert.alert('Success', 'Group created successfully!');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to create group');
-            }
-          }
-        }
-      ],
-      'plain-text'
-    );
+    setShowCreateModal(true);
+  };
+
+  const handleGroupCreated = async (group: any) => {
+    setCreatedGroup(group);
+    setShowCreateModal(false);
+    setShowInviteModal(true);
+    
+    // Refresh the groups list
+    const { data: groupsData } = await getUserGroups();
+    if (groupsData) {
+      const groupsWithTopMembers = await Promise.all(
+        groupsData.map(async (group) => {
+          const { data: topMember } = await getTopGroupMember(group.id);
+          return {
+            ...group,
+            topMember: topMember || { name: 'No activity yet' }
+          };
+        })
+      );
+      setGroups(groupsWithTopMembers);
+    }
+  };
+
+  const handleCloseInviteModal = () => {
+    setShowInviteModal(false);
+    setCreatedGroup(null);
   };
 
   const handleJoinGroup = () => {
@@ -226,13 +218,7 @@ const GroupsScreen = () => {
               <View style={styles.groupInfo}>
                 <View style={styles.groupTitleRow}>
                   <Text style={styles.groupName}>{group.name}</Text>
-                  {group.isCreator && (
-                    <View style={styles.creatorBadge}>
-                      <Ionicons name="star" size={12} color={colors.groupGold} />
-                      <Text style={styles.creatorBadgeText}>Creator</Text>
-                    </View>
-                  )}
-                  {group.isAdmin && !group.isCreator && (
+                  {group.isAdmin && (
                     <View style={styles.adminBadge}>
                       <Ionicons name="person" size={12} color={colors.primary} />
                       <Text style={styles.adminBadgeText}>Admin</Text>
@@ -293,6 +279,20 @@ const GroupsScreen = () => {
           <Text style={styles.joinGroupButtonText}>Join Group</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modals */}
+      <CreateGroupModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onGroupCreated={handleGroupCreated}
+      />
+      
+      <InviteCodeModal
+        visible={showInviteModal}
+        onClose={handleCloseInviteModal}
+        groupName={createdGroup?.name || ''}
+        inviteCode={createdGroup?.invite_code || ''}
+      />
     </ScrollView>
   );
 };
@@ -394,22 +394,6 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     fontWeight: 'bold',
     color: colors.textPrimary,
     marginRight: 8,
-  },
-  creatorBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.groupGold + '20',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.groupGold,
-  },
-  creatorBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colors.groupGold,
-    marginLeft: 4,
   },
   adminBadge: {
     flexDirection: 'row',

@@ -236,6 +236,16 @@ export async function getTopGroupMember(groupId: string) {
  * @param groupData - Group creation data
  * @returns {Promise<{ data: any | null, error: any }>} Created group or error
  */
+// Helper function to generate 7-character uppercase invite code
+function generateInviteCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < 7; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 export async function createGroup(groupData: {
   name: string;
   description: string;
@@ -247,6 +257,30 @@ export async function createGroup(groupData: {
   }
 
   try {
+    // Generate a unique 7-character uppercase invite code
+    let inviteCode = generateInviteCode();
+    let isUnique = false;
+    let attempts = 0;
+    
+    while (!isUnique && attempts < 10) {
+      const { data: existingGroup } = await supabase
+        .from('groups')
+        .select('id')
+        .eq('invite_code', inviteCode)
+        .single();
+      
+      if (!existingGroup) {
+        isUnique = true;
+      } else {
+        inviteCode = generateInviteCode();
+        attempts++;
+      }
+    }
+    
+    if (!isUnique) {
+      return { data: null, error: { message: 'Failed to generate unique invite code' } };
+    }
+
     // 1. Create the group
     const { data: group, error: groupError } = await supabase
       .from('groups')
@@ -254,9 +288,10 @@ export async function createGroup(groupData: {
         name: groupData.name,
         description: groupData.description,
         monthly_goal: groupData.monthly_goal,
-        created_by: userId
+        created_by: userId,
+        invite_code: inviteCode
       })
-      .select()
+      .select('id, name, description, monthly_goal, invite_code, created_at')
       .single();
 
     if (groupError) {
@@ -393,6 +428,9 @@ export async function getGroupDashboard(groupId: string) {
     const currentPoints = pointsData?.reduce((sum, entry) => sum + (entry.delta_points || 0), 0) || 0;
     const progressPercentage = group.monthly_goal > 0 ? Math.round((currentPoints / group.monthly_goal) * 100) : 0;
 
+    // Get current user ID for identification
+    const currentUserId = await authService.getCurrentUserId();
+
     // Calculate member stats (filter out members with null profiles)
     const memberStats = members?.filter((member: any) => member.profiles?.id)
       .map((member: any) => {
@@ -410,7 +448,8 @@ export async function getGroupDashboard(groupId: string) {
           hours: memberHours,
           isAdmin: member.is_admin,
           role: member.role,
-          joinedAt: member.joined_at
+          joinedAt: member.joined_at,
+          isCurrentUser: member.profiles.id === currentUserId
         };
       }) || [];
 
@@ -459,6 +498,7 @@ export async function getGroupDashboard(groupId: string) {
         id: group.id,
         name: group.name,
         description: group.description,
+        inviteCode: group.invite_code,
         memberCount: members?.length || 0,
         monthlyGoal: group.monthly_goal,
         currentPoints,
@@ -714,5 +754,518 @@ function formatTimeAgo(timestamp: string): string {
       day: 'numeric',
       year: 'numeric'
     });
+  }
+}
+
+/**
+ * Updates an existing group's details
+ * @param groupId - The ID of the group to update
+ * @param groupData - Updated group data
+ * @returns {Promise<{ data: any | null, error: any }>} Updated group or error
+ */
+export async function updateGroup(groupId: string, groupData: {
+  name: string;
+  description: string;
+  monthly_goal: number;
+}) {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    // Check if user is admin of the group
+    const { data: membership, error: membershipError } = await supabase
+      .from('group_members')
+      .select('is_admin')
+      .eq('group_id', groupId)
+      .eq('user_id', userId)
+      .single();
+
+    if (membershipError || !membership?.is_admin) {
+      return { data: null, error: { message: 'You do not have permission to update this group' } };
+    }
+
+    const { data: group, error: groupError } = await supabase
+      .from('groups')
+      .update({
+        name: groupData.name,
+        description: groupData.description,
+        monthly_goal: groupData.monthly_goal,
+      })
+      .eq('id', groupId)
+      .select('id, name, description, monthly_goal, invite_code, created_at')
+      .single();
+
+    if (groupError) {
+      return { data: null, error: groupError };
+    }
+
+    return { data: group, error: null };
+  } catch (error) {
+    console.error('Error updating group:', error);
+    return { data: null, error };
+  }
+}
+
+
+/**
+ * Removes a member from a group
+ * @param groupId - The ID of the group
+ * @param memberId - The ID of the member to remove
+ * @returns {Promise<{ data: any | null, error: any }>} Success or error
+ */
+export async function removeGroupMember(groupId: string, memberId: string) {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    // Check if user is admin of the group
+    const { data: membership, error: membershipError } = await supabase
+      .from('group_members')
+      .select('is_admin')
+      .eq('group_id', groupId)
+      .eq('user_id', userId)
+      .single();
+
+    if (membershipError || !membership?.is_admin) {
+      return { data: null, error: { message: 'You do not have permission to remove members' } };
+    }
+
+    // Remove the member from the group
+    const { error: removeError } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId)
+      .eq('user_id', memberId);
+
+    if (removeError) {
+      return { data: null, error: removeError };
+    }
+
+    return { data: { success: true }, error: null };
+  } catch (error) {
+    console.error('Error removing group member:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Disbands a group (removes all members and deletes the group)
+ * @param groupId - The ID of the group to disband
+ * @returns {Promise<{ data: any | null, error: any }>} Success or error
+ */
+export async function disbandGroup(groupId: string) {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    // Check if user is admin of the group
+    const { data: membership, error: membershipError } = await supabase
+      .from('group_members')
+      .select('is_admin')
+      .eq('group_id', groupId)
+      .eq('user_id', userId)
+      .single();
+
+    if (membershipError || !membership?.is_admin) {
+      return { data: null, error: { message: 'You do not have permission to disband this group' } };
+    }
+
+    // Remove all members from the group
+    const { error: removeMembersError } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId);
+
+    if (removeMembersError) {
+      return { data: null, error: removeMembersError };
+    }
+
+    // Delete the group
+    const { error: deleteGroupError } = await supabase
+      .from('groups')
+      .delete()
+      .eq('id', groupId);
+
+    if (deleteGroupError) {
+      return { data: null, error: deleteGroupError };
+    }
+
+    return { data: { success: true }, error: null };
+  } catch (error) {
+    console.error('Error disbanding group:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Leaves a group (removes current user from the group)
+ * @param groupId - The ID of the group to leave
+ * @returns {Promise<{ data: any | null, error: any }>} Success or error
+ */
+export async function leaveGroup(groupId: string) {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    // Remove the current user from the group
+    const { error: removeError } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId)
+      .eq('user_id', userId);
+
+    if (removeError) {
+      return { data: null, error: removeError };
+    }
+
+    return { data: { success: true }, error: null };
+  } catch (error) {
+    console.error('Error leaving group:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Calculates total points for the current user from points_ledger
+ * @returns {Promise<{ data: number | null, error: any }>} Total points or error
+ */
+export async function calculateUserTotalPoints() {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('points_ledger')
+      .select('delta_points')
+      .eq('user_id', userId);
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    const totalPoints = data?.reduce((sum, entry) => sum + (entry.delta_points || 0), 0) || 0;
+    return { data: totalPoints, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+/**
+ * Calculates current weekly streak for the current user from points_ledger
+ * A week is considered active if there's at least one points_ledger entry in that week
+ * @returns {Promise<{ data: number | null, error: any }>} Current weekly streak or error
+ */
+export async function calculateUserWeeklyStreak() {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    // Get all points_ledger entries for the user, ordered by date
+    const { data, error } = await supabase
+      .from('points_ledger')
+      .select('created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    if (!data || data.length === 0) {
+      return { data: 0, error: null };
+    }
+
+    // Group entries by week (Monday to Sunday)
+    const weeklyEntries = new Map<string, Date[]>();
+    
+    data.forEach(entry => {
+      const date = new Date(entry.created_at);
+      const weekStart = getWeekStart(date);
+      const weekKey = weekStart.toISOString().split('T')[0];
+      
+      if (!weeklyEntries.has(weekKey)) {
+        weeklyEntries.set(weekKey, []);
+      }
+      weeklyEntries.get(weekKey)!.push(date);
+    });
+
+    // Convert to array and sort by week start date (most recent first)
+    const weeks = Array.from(weeklyEntries.entries())
+      .map(([weekKey, dates]) => ({
+        weekStart: new Date(weekKey),
+        dates: dates.sort((a, b) => b.getTime() - a.getTime())
+      }))
+      .sort((a, b) => b.weekStart.getTime() - a.weekStart.getTime());
+
+    // Calculate consecutive weeks from the most recent week
+    let streak = 0;
+    const now = new Date();
+    const currentWeekStart = getWeekStart(now);
+    
+    for (let i = 0; i < weeks.length; i++) {
+      const week = weeks[i];
+      const expectedWeekStart = new Date(currentWeekStart);
+      expectedWeekStart.setDate(expectedWeekStart.getDate() - (i * 7));
+      
+      // Check if this week matches the expected week for the streak
+      if (isSameWeek(week.weekStart, expectedWeekStart)) {
+        streak++;
+      } else {
+        // If there's a gap, break the streak
+        break;
+      }
+    }
+
+    return { data: streak, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+/**
+ * Helper function to get the start of the week (Monday) for a given date
+ */
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  return new Date(d.setDate(diff));
+}
+
+/**
+ * Helper function to check if two dates are in the same week
+ */
+function isSameWeek(date1: Date, date2: Date): boolean {
+  const week1Start = getWeekStart(date1);
+  const week2Start = getWeekStart(date2);
+  return week1Start.getTime() === week2Start.getTime();
+}
+
+/**
+ * Gets all activity for the current user from their entire history
+ * @returns {Promise<{ data: any[] | null, error: any }>} All activity data or error
+ */
+export async function getAllUserActivity() {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    console.log('Looking for all activity for user:', userId);
+    
+    const { data, error } = await supabase
+      .from('points_ledger')
+      .select(`
+        id,
+        delta_points,
+        hours,
+        reason,
+        created_at,
+        joins (
+          events (
+            title,
+            organizations (
+              name
+            )
+          )
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching all user activity:', error);
+      return { data: null, error };
+    }
+
+    console.log('All user activity raw data:', data);
+    console.log('Number of entries found:', data?.length || 0);
+
+    // If no data with joins, try without joins as fallback
+    if (!data || data.length === 0) {
+      console.log('No data with joins, trying without joins...');
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('points_ledger')
+        .select(`
+          id,
+          delta_points,
+          hours,
+          reason,
+          created_at
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (fallbackError) {
+        console.error('Fallback query error:', fallbackError);
+        return { data: [], error: null }; // Return empty array instead of null
+      }
+
+      console.log('Fallback data:', fallbackData);
+      
+      const fallbackActivities = fallbackData?.map((entry: any) => ({
+        id: entry.id,
+        event: entry.reason || 'Activity',
+        organization: '',
+        points: entry.delta_points || 0,
+        hours: entry.hours || 0,
+        date: formatTimeAgo(entry.created_at),
+        created_at: entry.created_at
+      })) || [];
+
+      console.log('Fallback activities:', fallbackActivities);
+      return { data: fallbackActivities, error: null };
+    }
+
+    // Transform the data to match the expected format
+    const activities = data?.map((entry: any, index) => {
+      console.log('Processing entry:', entry);
+      return {
+        id: entry.id,
+        event: entry.joins?.events?.title || entry.reason || 'Activity',
+        organization: entry.joins?.events?.organizations?.name || '',
+        points: entry.delta_points || 0,
+        hours: entry.hours || 0,
+        date: formatTimeAgo(entry.created_at),
+        created_at: entry.created_at
+      };
+    }) || [];
+
+    console.log('Transformed activities:', activities);
+
+    return { data: activities, error: null };
+  } catch (error) {
+    console.error('Error getting all user activity:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Gets recent activity for the current user from the last month
+ * @returns {Promise<{ data: any[] | null, error: any }>} Recent activity data or error
+ */
+export async function getRecentActivity() {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    // Get the start of the current month
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    console.log('Looking for activity since:', startOfMonth.toISOString());
+    console.log('Current user ID:', userId);
+    
+    // First, let's check if there are any points_ledger entries for this user at all
+    const { data: allEntries } = await supabase
+      .from('points_ledger')
+      .select('id, delta_points, reason, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    console.log('All points_ledger entries for user:', allEntries);
+    
+    const { data, error } = await supabase
+      .from('points_ledger')
+      .select(`
+        id,
+        delta_points,
+        hours,
+        reason,
+        created_at,
+        joins (
+          events (
+            title,
+            organizations (
+              name
+            )
+          )
+        )
+      `)
+      .eq('user_id', userId)
+      .gte('created_at', startOfMonth.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    if (error) {
+      console.error('Error fetching recent activity:', error);
+      return { data: null, error };
+    }
+
+    console.log('Recent activity raw data:', data);
+    console.log('Number of entries found:', data?.length || 0);
+
+    // If no data with joins, try without joins as fallback
+    if (!data || data.length === 0) {
+      console.log('No data with joins, trying without joins...');
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('points_ledger')
+        .select(`
+          id,
+          delta_points,
+          hours,
+          reason,
+          created_at
+        `)
+        .eq('user_id', userId)
+        .gte('created_at', startOfMonth.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (fallbackError) {
+        console.error('Fallback query error:', fallbackError);
+        return { data: [], error: null }; // Return empty array instead of null
+      }
+
+      console.log('Fallback data:', fallbackData);
+      
+      const fallbackActivities = fallbackData?.map((entry: any) => ({
+        id: entry.id,
+        event: entry.reason || 'Activity',
+        organization: '',
+        points: entry.delta_points || 0,
+        hours: entry.hours || 0,
+        date: formatTimeAgo(entry.created_at),
+        created_at: entry.created_at
+      })) || [];
+
+      console.log('Fallback activities:', fallbackActivities);
+      return { data: fallbackActivities, error: null };
+    }
+
+    // Transform the data to match the expected format
+    const activities = data?.map((entry: any, index) => {
+      console.log('Processing entry:', entry);
+      return {
+        id: entry.id,
+        event: entry.joins?.events?.title || entry.reason || 'Activity',
+        organization: entry.joins?.events?.organizations?.name || 'System',
+        points: entry.delta_points || 0,
+        hours: entry.hours || 0,
+        date: formatTimeAgo(entry.created_at),
+        created_at: entry.created_at
+      };
+    }) || [];
+
+    console.log('Transformed activities:', activities);
+
+    return { data: activities, error: null };
+  } catch (error) {
+    console.error('Error getting recent activity:', error);
+    return { data: null, error };
   }
 }
