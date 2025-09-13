@@ -1,5 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
@@ -17,8 +28,16 @@ const EventsScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPageVisible, setEventPageVisible] = useState(false);
+  const animations = useRef<Record<string, Animated.Value>>({});
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const screenWidth = Dimensions.get('window').width;
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      UIManager.setLayoutAnimationEnabledExperimental?.(true);
+    }
+  }, []);
 
   useEffect(() => {
     fetchEvents();
@@ -72,6 +91,23 @@ const EventsScreen = () => {
     setSelectedEventId(null);
   };
 
+  const handleEventJoined = (id: string) => {
+    if (!animations.current[id]) {
+      animations.current[id] = new Animated.Value(0);
+    }
+    const anim = animations.current[id];
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+      delete animations.current[id];
+    });
+    closeEvent();
+  };
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -99,14 +135,28 @@ const EventsScreen = () => {
 
         <View style={styles.eventsContainer}>
           {events.length > 0 ? (
-            events.map((event) => (
-              <View key={event.id} style={styles.eventWrapper}>
-                <EventsEventCard
-                  {...event}
-                  onPress={() => openEvent(event.id)}
-                />
-              </View>
-            ))
+            events.map((event) => {
+              if (!animations.current[event.id]) {
+                animations.current[event.id] = new Animated.Value(0);
+              }
+              const anim = animations.current[event.id];
+              const translateX = anim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, screenWidth],
+              });
+              const opacity = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+              return (
+                <Animated.View
+                  key={event.id}
+                  style={[styles.eventWrapper, { transform: [{ translateX }], opacity }]}
+                >
+                  <EventsEventCard
+                    {...event}
+                    onPress={() => openEvent(event.id)}
+                  />
+                </Animated.View>
+              );
+            })
           ) : (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No events available at the moment</Text>
@@ -121,6 +171,7 @@ const EventsScreen = () => {
           eventId={selectedEventId}
           visible={eventPageVisible}
           onClose={closeEvent}
+          onJoinSuccess={() => selectedEventId && handleEventJoined(selectedEventId)}
         />
       )}
     </>

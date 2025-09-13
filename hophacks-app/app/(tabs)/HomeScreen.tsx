@@ -1,5 +1,19 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from 'react-native'
+import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,10 +35,18 @@ const HomeScreen = () => {
     tierProgress: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [eventPageVisible, setEventPageVisible] = useState(false);
-  const { colors } = useTheme();
-  const styles = React.useMemo(() => createStyles(colors), [colors]);
+    const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+    const [eventPageVisible, setEventPageVisible] = useState(false);
+    const animations = useRef<Record<string, Animated.Value>>({});
+    const { colors } = useTheme();
+    const styles = React.useMemo(() => createStyles(colors), [colors]);
+    const screenWidth = Dimensions.get('window').width;
+
+    useEffect(() => {
+      if (Platform.OS === 'android') {
+        UIManager.setLayoutAnimationEnabledExperimental?.(true);
+      }
+    }, []);
 
   // Helper function to determine tier based on points
   const getTierInfo = (points: number) => {
@@ -129,14 +151,15 @@ const HomeScreen = () => {
     );
   };
 
-  const suggestedEvents = [
+  const initialSuggestedEvents = [
     {
       id: '1',
       title: 'Food Pantry Packing',
-      description: 'Help pack and distribute food boxes for families in need during our weekly food distribution event.',
+      description:
+        'Help pack and distribute food boxes for families in need during our weekly food distribution event.',
       cause: 'food_security' as const,
-      starts_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours from now (2 PM today)
-      ends_at: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString(), // 9 hours from now (5 PM today)
+      starts_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+      ends_at: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString(),
       lat: 42.2808,
       lng: -83.7430,
       capacity: 20,
@@ -146,10 +169,13 @@ const HomeScreen = () => {
     {
       id: '2',
       title: 'Animal Shelter Cleanup',
-      description: 'Join us for our weekly shelter maintenance and animal care activities. Help make a difference for our furry friends!',
+      description:
+        'Join us for our weekly shelter maintenance and animal care activities. Help make a difference for our furry friends!',
       cause: 'animal_welfare' as const,
-      starts_at: new Date(Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(), // Tomorrow 10 AM
-      ends_at: new Date(Date.now() + 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000).toISOString(), // Tomorrow 1 PM
+      starts_at:
+        new Date(Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      ends_at:
+        new Date(Date.now() + 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000).toISOString(),
       lat: 42.2925,
       lng: -83.7351,
       capacity: 15,
@@ -159,10 +185,13 @@ const HomeScreen = () => {
     {
       id: '3',
       title: 'Community Garden',
-      description: 'Help maintain our community garden and learn about sustainable growing practices.',
+      description:
+        'Help maintain our community garden and learn about sustainable growing practices.',
       cause: 'environment' as const,
-      starts_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000).toISOString(), // Saturday 9 AM
-      ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000).toISOString(), // Saturday 12 PM
+      starts_at:
+        new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000).toISOString(),
+      ends_at:
+        new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000).toISOString(),
       lat: 42.2776,
       lng: -83.7382,
       capacity: 25,
@@ -170,6 +199,8 @@ const HomeScreen = () => {
       distance: '0.8 mi away',
     },
   ];
+
+  const [suggestedEvents, setSuggestedEvents] = useState(initialSuggestedEvents);
 
   const recentActivity = [
     {
@@ -210,6 +241,23 @@ const HomeScreen = () => {
   const closeEvent = () => {
     setEventPageVisible(false);
     setSelectedEventId(null);
+  };
+
+  const handleEventJoined = (id: string) => {
+    if (!animations.current[id]) {
+      animations.current[id] = new Animated.Value(0);
+    }
+    const anim = animations.current[id];
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setSuggestedEvents((prev) => prev.filter((e) => e.id !== id));
+      delete animations.current[id];
+    });
+    closeEvent();
   };
 
   return (
@@ -254,18 +302,30 @@ const HomeScreen = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>For You</Text>
         <Text style={styles.sectionSubtitle}>Happening Today Near You</Text>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.eventsScrollView}
         >
-          {suggestedEvents.map((event) => (
-            <HomeEventCard
-              key={event.id}
-              {...event}
-              onPress={() => openEvent(event.id)}
-            />
-          ))}
+          {suggestedEvents.map((event) => {
+            if (!animations.current[event.id]) {
+              animations.current[event.id] = new Animated.Value(0);
+            }
+            const anim = animations.current[event.id];
+            const translateX = anim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, screenWidth],
+            });
+            const opacity = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+            return (
+              <Animated.View key={event.id} style={{ transform: [{ translateX }], opacity }}>
+                <HomeEventCard
+                  {...event}
+                  onPress={() => openEvent(event.id)}
+                />
+              </Animated.View>
+            );
+          })}
         </ScrollView>
         {suggestedEvents.length === 0 && (
             <Text style={styles.noActivityText}>There are no events happening today near you :(</Text>
@@ -312,6 +372,7 @@ const HomeScreen = () => {
         eventId={selectedEventId}
         visible={eventPageVisible}
         onClose={closeEvent}
+        onJoinSuccess={() => selectedEventId && handleEventJoined(selectedEventId)}
       />
     )}
     </>

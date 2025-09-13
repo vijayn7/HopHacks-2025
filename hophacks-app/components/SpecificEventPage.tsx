@@ -38,12 +38,14 @@ interface SpecificEventPageProps {
   eventId: string;
   visible: boolean;
   onClose: () => void;
+  onJoinSuccess?: () => void;
 }
 
 const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
   eventId,
   visible,
   onClose,
+  onJoinSuccess,
 }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -232,7 +234,14 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
         {/* Sticky Bottom CTA Button */}
         <View style={styles.stickyButtonContainer}>
           {event && (
-            <EventCallToActionButton eventId={event.id} style={styles.joinButton} />
+            <EventCallToActionButton
+              eventId={event.id}
+              style={styles.joinButton}
+              onJoined={() => {
+                onClose();
+                onJoinSuccess && onJoinSuccess();
+              }}
+            />
           )}
         </View>
       </>

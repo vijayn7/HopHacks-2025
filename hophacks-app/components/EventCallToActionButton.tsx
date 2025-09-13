@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import type { ColorScheme } from '../constants/colors';
 import { joinEvent } from '../lib/apiService';
 
 export interface EventCallToActionButtonProps {
   eventId: string;
-  onPress?: () => void;
   disabled?: boolean;
   style?: object;
+  onJoined?: () => void;
 }
 
 const EventCallToActionButton: React.FC<EventCallToActionButtonProps> = ({
   eventId,
-  onPress,
   disabled = false,
   style,
+  onJoined,
 }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -28,23 +28,13 @@ const EventCallToActionButton: React.FC<EventCallToActionButtonProps> = ({
     setJoining(false);
 
     if (error) {
-      Alert.alert('Join Failed', 'Unable to join this event. Please try again later.');
-    } else {
-      setJoined(true);
-      console.log('User joined event:', eventId, data);
-      Alert.alert('Joined', 'You have successfully joined this event.');
+      console.error('Join Failed', error);
+      return;
     }
-  };
 
-  const handlePress = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      Alert.alert('Join Event', 'Are you sure you want to join this event?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Join', onPress: handleJoin },
-      ]);
-    }
+    setJoined(true);
+    console.log('User joined event:', eventId, data);
+    onJoined && onJoined();
   };
 
   const isDisabled = disabled || joining || joined;
@@ -52,7 +42,7 @@ const EventCallToActionButton: React.FC<EventCallToActionButtonProps> = ({
   return (
     <TouchableOpacity
       style={[styles.button, isDisabled && styles.buttonDisabled, style]}
-      onPress={handlePress}
+      onPress={handleJoin}
       disabled={isDisabled}
       activeOpacity={0.8}
     >
