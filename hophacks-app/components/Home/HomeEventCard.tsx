@@ -1,27 +1,26 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../constants/colors';
+import { Colors } from '../../constants/colors';
 
-// Interface matching the events table schema from agents.txt
-export interface EventCardProps {
-  id: string; // uuid from schema
+// Interface for HomeScreen event cards (compact, horizontal scrolling)
+export interface HomeEventCardProps {
+  id: string;
   title: string;
   description?: string;
-  cause: 'food_security' | 'animal_welfare' | 'environment' | 'education' | 'health' | 'community' | 'other'; // enum from schema
-  starts_at: string; // timestamp with time zone
-  ends_at: string; // timestamp with time zone
-  lat?: number; // double precision
-  lng?: number; // double precision
-  capacity?: number; // integer
-  org_name?: string; // from organizations table join
-  distance?: string; // calculated field for UI
+  cause: 'food_security' | 'animal_welfare' | 'environment' | 'education' | 'health' | 'community' | 'other';
+  starts_at: string;
+  ends_at: string;
+  lat?: number;
+  lng?: number;
+  capacity?: number;
+  org_name?: string;
+  distance?: string;
   onPress?: () => void;
   showJoinButton?: boolean;
-  fullWidth?: boolean; // New prop to control width
 }
 
-const EventCard: React.FC<EventCardProps> = ({
+const HomeEventCard: React.FC<HomeEventCardProps> = ({
   id,
   title,
   description,
@@ -35,15 +34,12 @@ const EventCard: React.FC<EventCardProps> = ({
   distance = 'Location TBD',
   onPress,
   showJoinButton = true,
-  fullWidth = false,
 }) => {
   // Format date/time for display
   const formatEventTime = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
-    const end = new Date(endTime);
     const now = new Date();
     
-    // Simple time formatting - can be enhanced with a date library
     const isToday = start.toDateString() === now.toDateString();
     const isTomorrow = start.toDateString() === new Date(now.getTime() + 24*60*60*1000).toDateString();
     
@@ -81,10 +77,7 @@ const EventCard: React.FC<EventCardProps> = ({
 
   return (
     <TouchableOpacity 
-      style={[
-        styles.eventCard, 
-        fullWidth && styles.eventCardFullWidth
-      ]} 
+      style={styles.eventCard} 
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -95,12 +88,6 @@ const EventCard: React.FC<EventCardProps> = ({
       
       <Text style={styles.eventOrganization}>{org_name}</Text>
       
-      {description && (
-        <Text style={styles.eventDescription} numberOfLines={2}>
-          {description}
-        </Text>
-      )}
-      
       <View style={styles.eventDetails}>
         <View style={styles.eventDetailItem}>
           <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
@@ -110,12 +97,6 @@ const EventCard: React.FC<EventCardProps> = ({
           <Ionicons name="pricetag-outline" size={14} color={Colors.textSecondary} />
           <Text style={styles.eventDetailText}>{formatCause(cause)}</Text>
         </View>
-        {capacity && (
-          <View style={styles.eventDetailItem}>
-            <Ionicons name="people-outline" size={14} color={Colors.textSecondary} />
-            <Text style={styles.eventDetailText}>Cap: {capacity}</Text>
-          </View>
-        )}
       </View>
       
       {showJoinButton && (
@@ -127,7 +108,7 @@ const EventCard: React.FC<EventCardProps> = ({
   );
 };
 
-export default EventCard;
+export default HomeEventCard;
 
 const styles = StyleSheet.create({
   eventCard: {
@@ -144,10 +125,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  eventCardFullWidth: {
-    width: '100%',
-    marginRight: 0,
   },
   eventHeader: {
     flexDirection: 'row',
@@ -170,13 +147,7 @@ const styles = StyleSheet.create({
   eventOrganization: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: 8,
-  },
-  eventDescription: {
-    fontSize: 13,
-    color: Colors.textSecondary,
     marginBottom: 12,
-    lineHeight: 18,
   },
   eventDetails: {
     marginBottom: 16,

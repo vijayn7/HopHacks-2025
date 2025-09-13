@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import React from 'react'
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import HomeEventCard from '../../components/HomeEventCard';
+import HomeEventCard from '../../components/Home/HomeEventCard';
 
 const HomeScreen = () => {
   // Mock data - replace with real data later

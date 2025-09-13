@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Text, View, StyleSheet, SafeAreaView } from "react-native";
+import { StyleSheet, View, SafeAreaView } from 'react-native';
 import CustomTabBar from '../components/CustomTabBar';
-import EventsList from '../components/EventsList';
 import { Colors } from '../constants/colors';
 import HomeScreen from './(tabs)/HomeScreen';
 import EventsScreen from './(tabs)/EventsScreen';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../constants/colors';
+import { Colors } from '../../constants/colors';
 
 // Interface for EventsScreen event cards (full-width, detailed view)
 export interface EventsEventCardProps {

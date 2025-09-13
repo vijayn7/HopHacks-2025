@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Colors } from '../../constants/colors';
-import EventsEventCard, { EventsEventCardProps } from '../../components/EventsEventCard';
+import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
 import { supabase } from '../../lib/supabase';
 
 interface Event extends EventsEventCardProps {
