@@ -13,14 +13,13 @@ import {
   Platform,
 } from 'react-native';
 import { Colors } from '../../constants/colors';
-import { getCurrentUserProfile, updateUserProfile, getCurrentUserEmail, updateUserEmail } from '../../lib/apiService';
+import { getCurrentUserProfile, updateUserProfile, updateUserEmail } from '../../lib/apiService';
+import { authService } from '../../lib/authService';
 
 interface Profile {
   id: string;
   display_name: string | null;
-  avatar_url: string | null;
   role: string;
-  coins: number;
   total_points: number;
   current_streak_weeks: number;
   longest_streak: number;
@@ -29,8 +28,6 @@ interface Profile {
   bio?: string | null;
   location?: string | null;
   birth_date?: string | null;
-  emergency_contact_name?: string | null;
-  emergency_contact_phone?: string | null;
   created_at: string;
 }
 
@@ -41,15 +38,20 @@ const ProfileScreen = () => {
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
   
-  // Form fields
+  // Form fields (these are the working copies during editing)
   const [displayName, setDisplayName] = useState('');
   const [phone, setPhone] = useState('');
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [emergencyContactName, setEmergencyContactName] = useState('');
-  const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
+  
+  // Original values (these are what's displayed in the header and used for cancel)
+  const [originalDisplayName, setOriginalDisplayName] = useState('');
+  const [originalEmail, setOriginalEmail] = useState('');
+  const [originalPhone, setOriginalPhone] = useState('');
+  const [originalBio, setOriginalBio] = useState('');
+  const [originalLocation, setOriginalLocation] = useState('');
+  const [originalBirthDate, setOriginalBirthDate] = useState('');
 
   useEffect(() => {
     loadProfile();
@@ -59,7 +61,7 @@ const ProfileScreen = () => {
     try {
       const [profileResult, emailResult] = await Promise.all([
         getCurrentUserProfile(),
-        getCurrentUserEmail()
+        await authService.getCurrentUserEmail()
       ]);
 
       if (profileResult.error) {
@@ -69,24 +71,46 @@ const ProfileScreen = () => {
 
       if (profileResult.data) {
         setProfile(profileResult.data);
-        setDisplayName(profileResult.data.display_name || '');
-        setPhone(profileResult.data.phone || '');
-        setBio(profileResult.data.bio || '');
-        setLocation(profileResult.data.location || '');
-        setBirthDate(profileResult.data.birth_date || '');
-        setEmergencyContactName(profileResult.data.emergency_contact_name || '');
-        setEmergencyContactPhone(profileResult.data.emergency_contact_phone || '');
-        setAvatarUrl(profileResult.data.avatar_url || '');
+        const displayNameValue = profileResult.data.display_name || '';
+        const phoneValue = profileResult.data.phone_number || '';
+        const bioValue = profileResult.data.bio || '';
+        const locationValue = profileResult.data.location || '';
+        const birthDateValue = profileResult.data.birth_date || '';
+        
+        // Set both working and original values
+        setDisplayName(displayNameValue);
+        setPhone(phoneValue);
+        setBio(bioValue);
+        setLocation(locationValue);
+        setBirthDate(birthDateValue);
+        
+        setOriginalDisplayName(displayNameValue);
+        setOriginalPhone(phoneValue);
+        setOriginalBio(bioValue);
+        setOriginalLocation(locationValue);
+        setOriginalBirthDate(birthDateValue);
       }
 
-      if (emailResult.data) {
-        setEmail(emailResult.data);
+      if (emailResult) {
+        setEmail(emailResult);
+        setOriginalEmail(emailResult);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to load profile');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancel = () => {
+    // Reset form fields to original values
+    setDisplayName(originalDisplayName);
+    setEmail(originalEmail);
+    setPhone(originalPhone);
+    setBio(originalBio);
+    setLocation(originalLocation);
+    setBirthDate(originalBirthDate);
+    setEditMode(false);
   };
 
   const handleSave = async () => {
@@ -99,13 +123,10 @@ const ProfileScreen = () => {
     try {
       const updateData = {
         display_name: displayName.trim(),
-        phone: phone.trim() || null,
+        phone_number: phone.trim() || null,
         bio: bio.trim() || null,
         location: location.trim() || null,
         birth_date: birthDate.trim() || null,
-        emergency_contact_name: emergencyContactName.trim() || null,
-        emergency_contact_phone: emergencyContactPhone.trim() || null,
-        avatar_url: avatarUrl.trim() || null,
       };
 
       const { error } = await updateUserProfile(updateData);
@@ -125,6 +146,15 @@ const ProfileScreen = () => {
 
       Alert.alert('Success', 'Profile updated successfully!');
       setEditMode(false);
+      
+      // Update original values to match the saved values
+      setOriginalDisplayName(displayName.trim());
+      setOriginalEmail(email);
+      setOriginalPhone(phone.trim() || '');
+      setOriginalBio(bio.trim() || '');
+      setOriginalLocation(location.trim() || '');
+      setOriginalBirthDate(birthDate.trim() || '');
+      
       loadProfile(); // Refresh profile data
     } catch (error) {
       Alert.alert('Error', 'Failed to update profile');
@@ -157,20 +187,8 @@ const ProfileScreen = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header Section */}
         <View style={styles.header}>
-          <View style={styles.avatarContainer}>
-            {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarText}>
-                  {displayName.charAt(0).toUpperCase() || 'U'}
-                </Text>
-              </View>
-            )}
-          </View>
-          
           <View style={styles.headerInfo}>
-            <Text style={styles.displayName}>{displayName || 'No Name'}</Text>
+            <Text style={styles.displayName}>{originalDisplayName || 'No Name'}</Text>
             <Text style={styles.role}>{profile?.role || 'Volunteer'}</Text>
             <Text style={styles.memberSince}>
               Member since {new Date(profile?.created_at || '').toLocaleDateString()}
@@ -179,7 +197,7 @@ const ProfileScreen = () => {
 
           <TouchableOpacity 
             style={styles.editButton}
-            onPress={() => setEditMode(!editMode)}
+            onPress={editMode ? handleCancel : () => setEditMode(true)}
           >
             <Text style={styles.editButtonText}>
               {editMode ? 'Cancel' : 'Edit'}
@@ -190,7 +208,6 @@ const ProfileScreen = () => {
         {/* Stats Section */}
         <View style={styles.statsContainer}>
           {renderStatCard('Total Points', profile?.total_points || 0)}
-          {renderStatCard('Coins', profile?.coins || 0)}
           {renderStatCard('Current Streak', `${profile?.current_streak_weeks || 0} weeks`)}
           {renderStatCard('Longest Streak', `${profile?.longest_streak || 0} weeks`)}
         </View>
@@ -271,44 +288,6 @@ const ProfileScreen = () => {
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Profile Picture URL</Text>
-            <TextInput
-              style={[styles.input, !editMode && styles.inputDisabled]}
-              value={avatarUrl}
-              onChangeText={setAvatarUrl}
-              placeholder="https://example.com/avatar.jpg"
-              autoCapitalize="none"
-              editable={editMode}
-            />
-          </View>
-
-          {/* Emergency Contact Section */}
-          <Text style={styles.sectionTitle}>Emergency Contact</Text>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Emergency Contact Name</Text>
-            <TextInput
-              style={[styles.input, !editMode && styles.inputDisabled]}
-              value={emergencyContactName}
-              onChangeText={setEmergencyContactName}
-              placeholder="Enter emergency contact name"
-              editable={editMode}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Emergency Contact Phone</Text>
-            <TextInput
-              style={[styles.input, !editMode && styles.inputDisabled]}
-              value={emergencyContactPhone}
-              onChangeText={setEmergencyContactPhone}
-              placeholder="Enter emergency contact phone"
-              keyboardType="phone-pad"
-              editable={editMode}
-            />
-          </View>
-
           {editMode && (
             <TouchableOpacity 
               style={[styles.saveButton, saving && styles.saveButtonDisabled]}
@@ -354,28 +333,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
-  },
-  avatarContainer: {
-    marginRight: 16,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.surfaceSecondary,
-  },
-  avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: Colors.textWhite,
   },
   headerInfo: {
     flex: 1,
