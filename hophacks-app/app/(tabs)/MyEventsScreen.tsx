@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
-import EventsEventCard, { EventsEventCardProps } from '../../components/Events/EventsEventCard';
+import MyEventsEventCard, { MyEventsEventCardProps } from '../../components/MyEvents/MyEventsEventCard';
+import QRScannerModal from '../../components/Events/QRScannerModal';
 import SpecificEventPage from '../../components/SpecificEventPage';
 import { getJoinedEvents, getCurrentUserProfile } from '../../lib/apiService';
 
-interface JoinedEvent extends EventsEventCardProps {
+interface JoinedEvent extends MyEventsEventCardProps {
   org_name: string;
   distance?: string;
 }
@@ -23,6 +24,7 @@ const MyEventsScreen = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPageVisible, setEventPageVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   useEffect(() => {
     init();
@@ -69,6 +71,8 @@ const MyEventsScreen = () => {
             onPress: undefined,
             showLearnMoreButton: false,
             isOwner: userId ? event.created_by === userId : false,
+            checkInTime: join.check_in_at,
+            checkOutTime: join.check_out_at,
           };
           if (!grouped[dateKey]) grouped[dateKey] = [];
           grouped[dateKey].push(formatted);
@@ -135,10 +139,13 @@ const MyEventsScreen = () => {
               </View>
               {eventsByDate[date].map((event) => (
                 <View key={event.id} style={styles.eventWrapper}>
-                  <EventsEventCard
+                  <MyEventsEventCard
                     {...event}
                     onPress={() => openEvent(event.id)}
-                    showLearnMoreButton={false}
+                    showScanButton={new Date(event.ends_at) >= new Date()}
+                    onScanPress={() => setScannerVisible(true)}
+                    checkInTime={new Date(event.ends_at) < new Date() ? event.checkInTime : undefined}
+                    checkOutTime={new Date(event.ends_at) < new Date() ? event.checkOutTime : undefined}
                   />
                 </View>
               ))}
@@ -160,6 +167,12 @@ const MyEventsScreen = () => {
           onJoinSuccess={closeEvent}
         />
       )}
+
+      <QRScannerModal
+        visible={scannerVisible}
+        onClose={() => setScannerVisible(false)}
+        onSuccess={fetchJoinedEvents}
+      />
     </>
   );
 };

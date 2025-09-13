@@ -129,6 +129,49 @@ export async function joinEvent(eventId: string) {
   return { data, error };
 }
 
+export async function checkInToEvent(eventId: string) {
+  const userId = await authService.getCurrentUserId();
+  const { data: join, error: joinError } = await supabase
+    .from('joins')
+    .select('id, check_in_at')
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .single();
+
+  if (joinError) return { data: null, error: joinError };
+  if (join?.check_in_at) {
+    return { data: null, error: { message: 'Already checked in' } };
+  }
+
+  const { data, error } = await supabase
+    .from('joins')
+    .update({ check_in_at: new Date().toISOString() })
+    .eq('id', join.id)
+    .select()
+    .single();
+  return { data, error };
+}
+
+export async function checkOutFromEvent(eventId: string) {
+  const userId = await authService.getCurrentUserId();
+  const { data: join, error: joinError } = await supabase
+    .from('joins')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .single();
+
+  if (joinError) return { data: null, error: joinError };
+
+  const { data, error } = await supabase
+    .from('joins')
+    .update({ check_out_at: new Date().toISOString() })
+    .eq('id', join.id)
+    .select()
+    .single();
+  return { data, error };
+}
+
 /**
  * Retrieves events that the current user has joined
  * @returns Joined events with event and organization details
@@ -138,7 +181,7 @@ export async function getJoinedEvents() {
   const { data, error } = await supabase
     .from('joins')
     .select(
-      `event_id, events (*, organizations (name))`
+      `event_id, check_in_at, check_out_at, events (*, organizations (name))`
     )
     .eq('user_id', userId)
     .eq('status', 'joined');
