@@ -18,6 +18,7 @@ import EventsEventCard, { EventsEventCardProps } from '../../components/Events/E
 import SpecificEventPage from '../../components/SpecificEventPage';
 import { getUnjoinedEvents, getCurrentUserProfile } from '../../lib/apiService';
 import CreateEventModal from '../../components/Events/CreateEventModal';
+import QRCodeModal from '../../components/Events/QRCodeModal';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Event extends EventsEventCardProps {
@@ -34,6 +35,8 @@ const EventsScreen = () => {
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [qrVisible, setQrVisible] = useState(false);
+  const [qrEventId, setQrEventId] = useState<string | null>(null);
   const animations = useRef<Record<string, { slide: Animated.Value; bubble: Animated.Value }>>({});
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -112,6 +115,11 @@ const EventsScreen = () => {
   const closeEvent = () => {
     setEventPageVisible(false);
     setSelectedEventId(null);
+  };
+
+  const openQRCode = (id: string) => {
+    setQrEventId(id);
+    setQrVisible(true);
   };
 
   const handleEventJoined = (id: string) => {
@@ -197,6 +205,7 @@ const EventsScreen = () => {
                     <EventsEventCard
                       {...event}
                       onPress={() => openEvent(event.id)}
+                      onQRCodePress={() => openQRCode(event.id)}
                     />
                   </Animated.View>
                 </View>
@@ -234,6 +243,12 @@ const EventsScreen = () => {
           onJoinSuccess={() => selectedEventId && handleEventJoined(selectedEventId)}
         />
       )}
+
+      <QRCodeModal
+        visible={qrVisible}
+        value={qrEventId || ''}
+        onClose={() => setQrVisible(false)}
+      />
     </>
   );
 };
