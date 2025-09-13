@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, View, StyleSheet, SafeAreaView, ActivityIndicator } from "react-native";
 import CustomTabBar from '../components/CustomTabBar';
 import { Colors } from '../constants/colors';
 import HomeScreen from './(tabs)/HomeScreen';
@@ -7,9 +7,33 @@ import EventsScreen from './(tabs)/EventsScreen';
 import MyEventsScreen from './(tabs)/MyEventsScreen';
 import GroupsScreen from './(tabs)/GroupsScreen';
 import ProfileScreen from './(tabs)/ProfileScreen';
+import { authService } from '../lib/authService';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState('home');
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    console.log('Initializing app...');
+    const initializeApp = async () => {
+      try {
+        console.log('Initializing authentication...');
+        const authSuccess = await authService.initializeAuth();
+        
+        if (authSuccess) {
+          console.log('App initialized successfully');
+        } else {
+          console.log('Authentication failed, but continuing with app');
+        }
+      } catch (error) {
+        console.log('App initialization error:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeApp();
+  }, []);
 
   const handleTabPress = (tab: string) => {
     setActiveTab(tab);
@@ -33,6 +57,15 @@ export default function Index() {
     }
   };
 
+  if (isInitializing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Initializing app...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -50,6 +83,18 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   content: {
     flex: 1,

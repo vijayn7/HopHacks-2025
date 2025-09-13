@@ -1,19 +1,126 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native'
-import React from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HomeEventCard from '../../components/Home/HomeEventCard';
+import { getUserInfoById } from '@/lib/apiService';
+import { authService } from '../../lib/authService';
 
 const HomeScreen = () => {
   // Mock data - replace with real data later
-  const user = {
-    name: "Alex Johnson",
-    streak: 3,
-    totalPoints: 1250,
-    currentTier: "Community Helper",
-    nextTier: "Volunteer Champion",
-    pointsToNextTier: 200,
-    tierProgress: 0.86, // 1250 / 1450 = 0.86
+
+  const [user, setUser] = useState({
+    name: "Alex Johnson", // fallback name
+    streak: 0,
+    totalPoints: 0,
+    currentTier: "New Volunteer",
+    nextTier: "Community Helper",
+    pointsToNextTier: 100,
+    tierProgress: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Helper function to determine tier based on points
+  const getTierInfo = (points: number) => {
+    if (points >= 2000) {
+      return {
+        currentTier: "Volunteer Legend",
+        nextTier: "Max Tier Reached",
+        pointsToNextTier: 0,
+        tierProgress: 1
+      };
+    } else if (points >= 1000) {
+      return {
+        currentTier: "Volunteer Champion",
+        nextTier: "Volunteer Legend",
+        pointsToNextTier: 2000 - points,
+        tierProgress: points / 2000
+      };
+    } else if (points >= 500) {
+      return {
+        currentTier: "Community Helper",
+        nextTier: "Volunteer Champion",
+        pointsToNextTier: 1000 - points,
+        tierProgress: points / 1000
+      };
+    } else if (points >= 100) {
+      return {
+        currentTier: "Active Volunteer",
+        nextTier: "Community Helper",
+        pointsToNextTier: 500 - points,
+        tierProgress: points / 500
+      };
+    } else {
+      return {
+        currentTier: "New Volunteer",
+        nextTier: "Active Volunteer",
+        pointsToNextTier: 100 - points,
+        tierProgress: points / 100
+      };
+    }
+  };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setIsLoading(true);
+
+        const { data, error } = await getUserInfoById();
+        
+        if (error) {
+          console.log('Error fetching user:', error);
+          setIsLoading(false);
+          return;
+        }
+
+        if (data) {
+          
+          const tierInfo = getTierInfo(data.total_points || 0);
+          
+          setUser({
+            name: data.display_name || "Volunteer",
+            streak: data.current_streak_weeks || 0,
+            totalPoints: data.total_points || 0,
+            currentTier: tierInfo.currentTier,
+            nextTier: tierInfo.nextTier,
+            pointsToNextTier: tierInfo.pointsToNextTier,
+            tierProgress: tierInfo.tierProgress,
+          });
+        }
+      } catch (error) {
+        console.log('Error in fetchUser:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUser();
+  }, []);
+
+  const handleSignOut = async () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await authService.signOut();
+              console.log('User signed out successfully');
+              // You could add navigation logic here if needed
+            } catch (error) {
+              console.log('Error signing out:', error);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const suggestedEvents = [
@@ -76,6 +183,18 @@ const HomeScreen = () => {
       hours: 2,
     },
   ];
+
+  // Loading screen component
+  const LoadingScreen = () => (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color={Colors.primary} />
+      <Text style={styles.loadingText}>Loading your profile...</Text>
+    </View>
+  );
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -160,6 +279,14 @@ const HomeScreen = () => {
           )}
         </View>
       </View>
+
+      {/* Sign Out Button - For Testing */}
+      <View style={styles.signOutSection}>
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+          <Ionicons name="log-out-outline" size={20} color={Colors.error} />
+          <Text style={styles.signOutText}>Sign Out (Testing)</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   )
 }
@@ -170,6 +297,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  // Loading Screen Styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   // Profile Widget Styles
   profileWidget: {
@@ -364,5 +504,36 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     paddingVertical: 12,
+  },
+  // Sign Out Button Styles
+  signOutSection: {
+    marginHorizontal: 16,
+    marginBottom: 24,
+    marginTop: 16,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.error,
+    shadowColor: Colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  signOutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.error,
+    marginLeft: 8,
   },
 });
