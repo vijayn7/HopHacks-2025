@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../constants/colors';
 
 interface TabBarProps {
   activeTab: string;
@@ -17,16 +18,15 @@ const CustomTabBar: React.FC<TabBarProps> = ({ activeTab, onTabPress }) => {
     },
     {
       id: 'events',
-      label: 'Events',
-      icon: 'calendar-outline',
-      activeIcon: 'calendar',
+      label: 'Discover',
+      icon: 'search-outline',
+      activeIcon: 'search',
     },
     {
       id: 'myEvents',
       label: 'My Events',
       icon: 'star-outline',
       activeIcon: 'star',
-      isProminent: true,
     },
     {
       id: 'groups',
@@ -62,8 +62,8 @@ const CustomTabBar: React.FC<TabBarProps> = ({ activeTab, onTabPress }) => {
           ]}>
             <Ionicons
               name={activeTab === tab.id ? tab.activeIcon : tab.icon}
-              size={tab.isProminent ? 28 : 24}
-              color={activeTab === tab.id ? '#FFFFFF' : tab.isProminent ? '#FF6B35' : '#666666'}
+              size={tab.isProminent ? 24 : 20}
+              color={activeTab === tab.id ? Colors.textWhite : tab.isProminent ? Colors.primary : Colors.tabBarInactive}
             />
           </View>
           <Text style={[
@@ -82,13 +82,13 @@ const CustomTabBar: React.FC<TabBarProps> = ({ activeTab, onTabPress }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.tabBarBackground,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    paddingBottom: 8,
-    paddingTop: 8,
+    borderTopColor: Colors.tabBarBorder,
+    paddingBottom: 36,
+    paddingTop: 6,
     paddingHorizontal: 4,
-    shadowColor: '#000',
+    shadowColor: Colors.shadow,
     shadowOffset: {
       width: 0,
       height: -2,
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
     paddingHorizontal: 4,
   },
   prominentTab: {
@@ -111,37 +111,37 @@ const styles = StyleSheet.create({
     // Additional styling for active tab if needed
   },
   iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  prominentIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  prominentIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FFF5F0',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 2,
-    borderColor: '#FF6B35',
+    borderColor: Colors.primary,
   },
   activeIconContainer: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: Colors.primary,
   },
   tabLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
-    color: '#666666',
+    color: Colors.tabBarInactive,
     textAlign: 'center',
   },
   prominentLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
-    color: '#FF6B35',
+    color: Colors.primary,
   },
   activeLabel: {
-    color: '#FF6B35',
+    color: Colors.tabBarActive,
     fontWeight: '600',
   },
 });

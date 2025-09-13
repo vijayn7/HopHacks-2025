@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Text, View, StyleSheet, SafeAreaView } from "react-native";
 import CustomTabBar from '../components/CustomTabBar';
+import { Colors } from '../constants/colors';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState('home');
@@ -28,19 +29,24 @@ export default function Index() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {renderTabContent()}
-      </View>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.content}>
+          {renderTabContent()}
+        </View>
+      </SafeAreaView>
       <CustomTabBar activeTab={activeTab} onTabPress={handleTabPress} />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: Colors.background,
+  },
+  safeArea: {
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -51,7 +57,7 @@ const styles = StyleSheet.create({
   tabContent: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
+    color: Colors.textPrimary,
     textAlign: 'center',
   },
 });
