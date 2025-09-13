@@ -1,55 +1,55 @@
-export const Colors = {
+export const lightColors = {
   // Primary Colors
   primary: '#FF6B35',
   primaryLight: '#FFF5F0',
   primaryDark: '#E55A2B',
-  
+
   // Background Colors
   background: '#F8F9FA',
   surface: '#FFFFFF',
   surfaceSecondary: '#F5F5F5',
-  
+
   // Text Colors
   textPrimary: '#333333',
   textSecondary: '#666666',
   textLight: '#999999',
   textWhite: '#FFFFFF',
-  
+
   // Border Colors
   border: '#E5E5E5',
   borderLight: '#F0F0F0',
-  
+
   // Status Colors
   success: '#4CAF50',
   warning: '#FF9800',
   error: '#F44336',
   info: '#2196F3',
-  
+
   // Tab Bar Colors
   tabBarBackground: '#FFFFFF',
   tabBarBorder: '#E5E5E5',
   tabBarActive: '#FF6B35',
   tabBarInactive: '#666666',
-  
+
   // Shadow Colors
   shadow: '#000000',
-  
+
   // Group/Competition Colors
   groupGold: '#FFD700',
   groupSilver: '#C0C0C0',
   groupBronze: '#CD7F32',
-  
+
   // Event Category Colors
   foodSecurity: '#4CAF50',
   animalWelfare: '#9C27B0',
   elderCare: '#FF9800',
   environment: '#4CAF50',
   education: '#2196F3',
-  
+
   // Streak Colors
   streakActive: '#FF6B35',
   streakInactive: '#CCCCCC',
-  
+
   // Badge Colors
   badgeGold: '#FFD700',
   badgeSilver: '#C0C0C0',
@@ -57,4 +57,67 @@ export const Colors = {
   badgePlatinum: '#E5E4E2',
 } as const;
 
-export type ColorKey = keyof typeof Colors;
+export const darkColors: typeof lightColors = {
+  // Primary Colors
+  primary: '#FF6B35',
+  primaryLight: '#E55A2B',
+  primaryDark: '#FFF5F0',
+
+  // Background Colors
+  background: '#121212',
+  surface: '#1E1E1E',
+  surfaceSecondary: '#2C2C2C',
+
+  // Text Colors
+  textPrimary: '#F5F5F5',
+  textSecondary: '#CCCCCC',
+  textLight: '#999999',
+  textWhite: '#FFFFFF',
+
+  // Border Colors
+  border: '#333333',
+  borderLight: '#444444',
+
+  // Status Colors
+  success: '#4CAF50',
+  warning: '#FF9800',
+  error: '#F44336',
+  info: '#2196F3',
+
+  // Tab Bar Colors
+  tabBarBackground: '#1E1E1E',
+  tabBarBorder: '#333333',
+  tabBarActive: '#FF6B35',
+  tabBarInactive: '#999999',
+
+  // Shadow Colors
+  shadow: '#000000',
+
+  // Group/Competition Colors
+  groupGold: '#FFD700',
+  groupSilver: '#C0C0C0',
+  groupBronze: '#CD7F32',
+
+  // Event Category Colors
+  foodSecurity: '#4CAF50',
+  animalWelfare: '#9C27B0',
+  elderCare: '#FF9800',
+  environment: '#4CAF50',
+  education: '#2196F3',
+
+  // Streak Colors
+  streakActive: '#FF6B35',
+  streakInactive: '#666666',
+
+  // Badge Colors
+  badgeGold: '#FFD700',
+  badgeSilver: '#C0C0C0',
+  badgeBronze: '#CD7F32',
+  badgePlatinum: '#E5E4E2',
+};
+
+export type ColorScheme = typeof lightColors;
+
+export const getThemeColors = (theme: 'light' | 'dark'): ColorScheme =>
+  theme === 'dark' ? darkColors : lightColors;
+

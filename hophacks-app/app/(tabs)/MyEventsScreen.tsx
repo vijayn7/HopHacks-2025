@@ -1,26 +1,30 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '../../constants/colors';
-
-const MyEventsScreen = () => (
-  <View style={styles.container}>
-    <Text style={styles.text}>My Events Screen - Coming Soon!</Text>
-  </View>
-);
+import { useTheme } from '../../context/ThemeContext';
+import type { ColorScheme } from '../../constants/colors';
+const MyEventsScreen = () => {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text}>My Events Screen - Coming Soon!</Text>
+    </View>
+  );
+};
 
 export default MyEventsScreen;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   text: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
 });

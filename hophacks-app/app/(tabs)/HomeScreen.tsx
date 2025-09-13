@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { Colors } from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
+import type { ColorScheme } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HomeEventCard from '../../components/Home/HomeEventCard';
 import { getUserInfoById } from '@/lib/apiService';
@@ -19,6 +20,8 @@ const HomeScreen = () => {
     tierProgress: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   // Helper function to determine tier based on points
   const getTierInfo = (points: number) => {
@@ -187,7 +190,7 @@ const HomeScreen = () => {
   // Loading screen component
   const LoadingScreen = () => (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color={Colors.primary} />
+      <ActivityIndicator size="large" color={colors.primary} />
       <Text style={styles.loadingText}>Loading your profile...</Text>
     </View>
   );
@@ -201,12 +204,12 @@ const HomeScreen = () => {
       {/* Profile Widget */}
       <View style={styles.profileWidget}>
         <View style={styles.profileIcon}>
-          <Ionicons name="person" size={40} color={Colors.primary} />
+          <Ionicons name="person" size={40} color={colors.primary} />
         </View>
         <View style={styles.profileInfo}>
           <Text style={styles.userName}>{user.name}</Text>
           <View style={styles.streakContainer}>
-            <Ionicons name="flame" size={18} color={Colors.streakActive} />
+            <Ionicons name="flame" size={18} color={colors.streakActive} />
             <Text style={styles.streakText}>{user.streak} week streak</Text>
           </View>
           <Text style={styles.tierText}>{user.currentTier}</Text>
@@ -261,7 +264,7 @@ const HomeScreen = () => {
           {recentActivity.map((activity) => (
             <View key={activity.id} style={styles.activityItem}>
               <View style={styles.activityIcon}>
-                <Ionicons name="checkmark-circle" size={24} color={Colors.success} />
+                <Ionicons name="checkmark-circle" size={24} color={colors.success} />
               </View>
               <View style={styles.activityContent}>
                 <Text style={styles.activityEvent}>{activity.event}</Text>
@@ -283,7 +286,7 @@ const HomeScreen = () => {
       {/* Sign Out Button - For Testing */}
       <View style={styles.signOutSection}>
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Ionicons name="log-out-outline" size={20} color={Colors.error} />
+          <Ionicons name="log-out-outline" size={20} color={colors.error} />
           <Text style={styles.signOutText}>Sign Out (Testing)</Text>
         </TouchableOpacity>
       </View>
@@ -293,33 +296,33 @@ const HomeScreen = () => {
 
 export default HomeScreen;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   // Loading Screen Styles
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   // Profile Widget Styles
   profileWidget: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     margin: 16,
     padding: 20,
     borderRadius: 16,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 3,
@@ -332,7 +335,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 20,
@@ -343,7 +346,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 6,
   },
   streakContainer: {
@@ -354,28 +357,28 @@ const styles = StyleSheet.create({
   streakText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.streakActive,
+    color: colors.streakActive,
     marginLeft: 6,
   },
   tierText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: 4,
   },
   pointsText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   // Progress Bar Styles
   progressSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
     borderRadius: 12,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -393,11 +396,11 @@ const styles = StyleSheet.create({
   progressTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   progressPoints: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   progressBarContainer: {
@@ -407,19 +410,19 @@ const styles = StyleSheet.create({
   progressBarBackground: {
     flex: 1,
     height: 8,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     borderRadius: 4,
     marginRight: 12,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 4,
   },
   progressPercentage: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.primary,
+    color: colors.primary,
     minWidth: 40,
     textAlign: 'right',
   },
@@ -431,12 +434,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 16,
   },
   // Event Card Styles
@@ -446,10 +449,10 @@ const styles = StyleSheet.create({
   },
   // Activity Styles
   activityList: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -463,7 +466,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: colors.borderLight,
   },
   activityIcon: {
     marginRight: 12,
@@ -474,17 +477,17 @@ const styles = StyleSheet.create({
   activityEvent: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   activityOrganization: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 2,
   },
   activityDate: {
     fontSize: 12,
-    color: Colors.textLight,
+    color: colors.textLight,
   },
   activityStats: {
     alignItems: 'flex-end',
@@ -492,16 +495,16 @@ const styles = StyleSheet.create({
   activityPoints: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.success,
+    color: colors.success,
     marginBottom: 2,
   },
   activityHours: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   noActivityText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     paddingVertical: 12,
   },
@@ -515,13 +518,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.error,
-    shadowColor: Colors.shadow,
+    borderColor: colors.error,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 1,
@@ -533,7 +536,7 @@ const styles = StyleSheet.create({
   signOutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.error,
+    color: colors.error,
     marginLeft: 8,
   },
 });
