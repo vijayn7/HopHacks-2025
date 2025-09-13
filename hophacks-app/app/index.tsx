@@ -73,7 +73,14 @@ export default function Index() {
   }
 
   if (!isAuthenticated) {
-    return <LoginScreen onAuthSuccess={() => setIsAuthenticated(true)} />;
+    return (
+      <LoginScreen
+        onAuthSuccess={() => {
+          setIsAuthenticated(true);
+          setActiveTab('home');
+        }}
+      />
+    );
   }
 
   return (
