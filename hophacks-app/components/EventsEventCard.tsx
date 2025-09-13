@@ -82,11 +82,17 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
       activeOpacity={0.8}
     >
       <View style={styles.eventHeader}>
-        <Text style={styles.eventTitle}>{title}</Text>
-        <Text style={styles.eventTime}>{formatEventTime(starts_at, ends_at)}</Text>
+        {/* Event Image Placeholder */}
+        <View style={styles.eventImageContainer}>
+          <Ionicons name="image-outline" size={32} color={Colors.textSecondary} />
+        </View>
+        
+        {/* Event Info */}
+        <View style={styles.eventInfo}>
+          <Text style={styles.eventTitle}>{title}</Text>
+          <Text style={styles.eventOrganization}>{org_name}</Text>
+        </View>
       </View>
-      
-      <Text style={styles.eventOrganization}>{org_name}</Text>
       
       {description && (
         <Text style={styles.eventDescription} numberOfLines={2}>
@@ -109,6 +115,10 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
             <Text style={styles.eventDetailText}>Cap: {capacity}</Text>
           </View>
         )}
+        <View style={styles.eventDetailItem}>
+          <Ionicons name="time-outline" size={14} color={Colors.textSecondary} />
+          <Text style={styles.eventDetailText}>{formatEventTime(starts_at, ends_at)}</Text>
+        </View>
       </View>
       
       {showJoinButton && (
@@ -139,26 +149,31 @@ const styles = StyleSheet.create({
   },
   eventHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  eventImageContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: Colors.borderLight || '#E5E5E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  eventInfo: {
+    flex: 1,
+    justifyContent: 'flex-start',
   },
   eventTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: Colors.textPrimary,
-    flex: 1,
-    marginRight: 8,
-  },
-  eventTime: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '500',
+    marginBottom: 4,
   },
   eventOrganization: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: 8,
   },
   eventDescription: {
     fontSize: 13,
