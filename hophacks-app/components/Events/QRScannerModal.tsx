@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, StyleSheet, Switch, TouchableOpacity, Alert } from 'react-native';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import { checkInToEvent, checkOutFromEvent } from '../../lib/apiService';
@@ -14,20 +14,18 @@ interface QRScannerModalProps {
 const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuccess }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [isSignIn, setIsSignIn] = useState(true);
   const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setScanned(false);
-      BarCodeScanner.requestPermissionsAsync().then(({ status }) =>
-        setHasPermission(status === 'granted')
-      );
+      requestPermission();
     }
-  }, [visible]);
+  }, [visible, requestPermission]);
 
-  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+  const handleBarCodeScanned = async ({ data }: BarcodeScanningResult) => {
     if (scanned) return;
     setScanned(true);
     const eventId = data;
@@ -42,15 +40,16 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose, onSuc
     onClose();
   };
 
-  if (hasPermission === null) return null;
+  if (!permission) return null;
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
-        {hasPermission ? (
-          <BarCodeScanner
+        {permission.granted ? (
+          <CameraView
             style={StyleSheet.absoluteFillObject}
-            onBarCodeScanned={handleBarCodeScanned}
+            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+            onBarcodeScanned={handleBarCodeScanned}
           />
         ) : (
           <View style={styles.permissionContainer}>
