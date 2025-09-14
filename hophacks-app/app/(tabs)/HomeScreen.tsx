@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Image,
   Animated,
   Dimensions,
   LayoutAnimation,
@@ -19,7 +20,6 @@ import type { ColorScheme } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HomeEventCard from '../../components/Home/HomeEventCard';
 import { getUserInfoById, getEventRecommendations, getRecentActivity, calculateUserTotalPoints, calculateUserWeeklyStreak } from '@/lib/apiService';
-import { authService } from '../../lib/authService';
 import { router } from 'expo-router';
 import SpecificEventPage from '../../components/SpecificEventPage';
 
@@ -32,6 +32,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ isActive }) => {
 
   const [user, setUser] = useState({
     name: "Alex Johnson", // fallback name
+    avatar: null as string | null,
     streak: 0,
     totalPoints: 0,
     currentTier: "New Volunteer",
@@ -57,7 +58,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ isActive }) => {
     }, []);
 
   // Helper function to clean image URLs and provide fallbacks
-  const cleanImageUrl = (url: string) => {
+  const cleanImageUrl = (url: string | null | undefined) => {
     if (!url) return null;
     
     // Remove $0 suffix and other common issues
@@ -136,6 +137,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ isActive }) => {
 
         setUser({
           name: userData.display_name || "Volunteer",
+          avatar: userData.avatar_url || null,
           streak: calculatedStreak,
           totalPoints: calculatedPoints,
           currentTier: tierInfo.currentTier,
@@ -291,9 +293,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ isActive }) => {
       {/* Profile Widget */}
       <View style={styles.profileWidget}>
         <View style={styles.profileIcon}>
-          <Text style={styles.profileIconText}>
-            {user.name.charAt(0).toUpperCase()}
-          </Text>
+          {user.avatar ? (
+            <Image
+              source={{ uri: cleanImageUrl(user.avatar) || undefined }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <Text style={styles.profileIconText}>
+              {user.name.charAt(0).toUpperCase()}
+            </Text>
+          )}
         </View>
         <View style={styles.profileInfo}>
           <Text style={styles.userName}>{user.name}</Text>
@@ -465,11 +474,17 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 20,
+    overflow: 'hidden',
   },
   profileIconText: {
     fontSize: 32,
     fontWeight: '600',
     color: colors.textWhite,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 40,
   },
   profileInfo: {
     flex: 1,
