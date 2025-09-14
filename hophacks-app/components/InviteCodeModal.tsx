@@ -73,7 +73,7 @@ const InviteCodeModal: React.FC<InviteCodeModalProps> = ({
             <Ionicons name="checkmark-circle" size={80} color={colors.success} />
           </View>
 
-          <Text style={styles.title}>Welcome to "{groupName}"!</Text>
+          <Text style={styles.title}>Welcome to &quot;{groupName}&quot;!</Text>
           <Text style={styles.subtitle}>
             Your group has been created successfully. Share the invite code below with friends to get them to join!
           </Text>
