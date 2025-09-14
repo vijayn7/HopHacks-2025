@@ -24,6 +24,7 @@ import { Ionicons } from '@expo/vector-icons';
 interface Event extends EventsEventCardProps {
   org_name: string;
   distance?: string;
+  image_url?: string | null;
 }
 
 const EventsScreen = () => {
@@ -58,6 +59,21 @@ const EventsScreen = () => {
     }
   }, [currentUserId]);
 
+  // Helper function to clean image URLs
+  const cleanImageUrl = (url: string) => {
+    if (!url) return null;
+    // Remove $0 suffix and other common issues
+    let cleaned = url.replace(/\$0$/, '').trim();
+    // Ensure it's a valid URL
+    try {
+      new URL(cleaned);
+      return cleaned;
+    } catch {
+      console.log('Invalid URL:', url);
+      return null;
+    }
+  };
+
   const checkRole = async () => {
     const { data } = await getCurrentUserProfile();
     if (data) {
@@ -83,20 +99,27 @@ const EventsScreen = () => {
 
       if (data) {
         // Transform the data to match our EventCard interface
-        const transformedEvents: Event[] = data.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          description: event.description,
-          cause: event.cause,
-          starts_at: event.starts_at,
-          ends_at: event.ends_at,
-          lat: event.lat,
-          lng: event.lng,
-          capacity: event.capacity,
-          org_name: event.organizations?.name || 'Unknown Organization',
-          distance: event.lat && event.lng ? 'Near you' : 'Location TBD', // TODO: Calculate actual distance
-          isOwner: event.created_by === currentUserId,
-        }));
+        const transformedEvents: Event[] = data.map((event: any) => {
+          console.log('🔍 EventsScreen - Raw event data:', event);
+          console.log('🖼️ EventsScreen - Event image_url (raw):', event.image_url);
+          const cleanedUrl = event.image_url ? cleanImageUrl(event.image_url) : null;
+          console.log('🧹 EventsScreen - Event image_url (cleaned):', cleanedUrl);
+          return {
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            cause: event.cause,
+            starts_at: event.starts_at,
+            ends_at: event.ends_at,
+            lat: event.lat,
+            lng: event.lng,
+            capacity: event.capacity,
+            org_name: event.organizations?.name || 'Unknown Organization',
+            distance: event.lat && event.lng ? 'Near you' : 'Location TBD', // TODO: Calculate actual distance
+            image_url: cleanedUrl,
+            isOwner: event.created_by === currentUserId,
+          };
+        });
 
         setEvents(transformedEvents);
       }

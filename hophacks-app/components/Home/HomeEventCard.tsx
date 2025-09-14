@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
@@ -18,6 +18,7 @@ export interface HomeEventCardProps {
   capacity?: number;
   org_name?: string;
   distance?: string;
+  image_url?: string | null;
   onPress?: () => void;
   showLearnMoreButton?: boolean;
 }
@@ -34,6 +35,7 @@ const HomeEventCard: React.FC<HomeEventCardProps> = ({
   capacity,
   org_name = 'Organization',
   distance = 'Location TBD',
+  image_url,
   onPress,
   showLearnMoreButton = true,
 }) => {
@@ -72,6 +74,47 @@ const HomeEventCard: React.FC<HomeEventCardProps> = ({
     return distance;
   };
 
+  // Get icon for cause/category
+  const getCauseIcon = (cause: string) => {
+    switch (cause) {
+      case 'food_security':
+        return 'restaurant';
+      case 'animal_welfare':
+        return 'paw';
+      case 'environment':
+        return 'leaf';
+      case 'education':
+        return 'school';
+      case 'health':
+        return 'medical';
+      case 'community':
+        return 'people';
+      default:
+        return 'heart';
+    }
+  };
+
+  // Get color for cause/category
+  const getCauseColor = (cause: string) => {
+    switch (cause) {
+      case 'food_security':
+        return '#4CAF50'; // Green
+      case 'animal_welfare':
+        return '#9C27B0'; // Purple
+      case 'environment':
+        return '#4CAF50'; // Green
+      case 'education':
+        return '#2196F3'; // Blue
+      case 'health':
+        return '#F44336'; // Red
+      case 'community':
+        return '#FF9800'; // Orange
+      default:
+        return colors.primary; // Default orange
+    }
+  };
+
+
   return (
     <TouchableOpacity 
       style={styles.eventCard} 
@@ -87,6 +130,28 @@ const HomeEventCard: React.FC<HomeEventCardProps> = ({
           {title}
         </Text>
         <Text style={styles.eventTime}>{formatEventTime(starts_at, ends_at)}</Text>
+      </View>
+      
+      {/* Event Image */}
+      <View style={styles.eventImageContainer}>
+        {image_url ? (
+          <Image
+            source={{ uri: image_url }}
+            style={styles.eventImage}
+            resizeMode="cover"
+            onLoadStart={() => console.log('🖼️ Image loading started:', image_url)}
+            onLoadEnd={() => console.log('✅ Image loaded successfully:', image_url)}
+            onLoad={() => console.log('📸 Image onLoad triggered:', image_url)}
+          />
+        ) : (
+          <View style={[styles.placeholderImage, { backgroundColor: getCauseColor(cause) }]}>
+            <View style={styles.iconContainer}>
+              <Ionicons name={getCauseIcon(cause)} size={48} color="white" />
+            </View>
+            <Text style={styles.placeholderText}>{formatCause(cause)}</Text>
+            <Text style={styles.debugText}>No image</Text>
+          </View>
+        )}
       </View>
       
       <Text style={styles.eventOrganization}>{org_name}</Text>
@@ -152,6 +217,46 @@ const createStyles = (colors: ColorScheme) =>
       fontSize: 14,
       color: colors.textSecondary,
       marginBottom: 12,
+    },
+    eventImageContainer: {
+      width: '100%',
+      height: 120,
+      borderRadius: 8,
+      marginBottom: 12,
+      overflow: 'hidden',
+      backgroundColor: colors.borderLight,
+    },
+    eventImage: {
+      width: '100%',
+      height: '100%',
+    },
+    placeholderImage: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    iconContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    placeholderText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: 'white',
+      marginTop: 8,
+      textAlign: 'center',
+    },
+    debugText: {
+      fontSize: 10,
+      color: 'rgba(255, 255, 255, 0.7)',
+      marginTop: 4,
+      textAlign: 'center',
     },
     eventDetails: {
       marginBottom: 16,

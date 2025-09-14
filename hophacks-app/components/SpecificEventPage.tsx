@@ -8,11 +8,14 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Modal,
+  Image,
+  Share,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ColorScheme } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
-import { getEventById } from '../lib/apiService';
+import { getEventById, getCurrentUserProfile, getEventParticipants } from '../lib/apiService';
 import EventCallToActionButton from './EventCallToActionButton';
 
 interface EventDetail {
@@ -25,6 +28,8 @@ interface EventDetail {
   lat?: number;
   lng?: number;
   capacity?: number;
+  image_url?: string;
+  created_by?: string;
   organizations?: {
     id: string;
     name: string;
@@ -32,6 +37,18 @@ interface EventDetail {
     phone?: string;
     verified: boolean;
   };
+}
+
+interface EventParticipant {
+  id: string;
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  checkedIn: boolean;
+  checkedOut: boolean;
+  joinedAt: string;
+  checkInAt?: string;
+  checkOutAt?: string;
 }
 
 interface SpecificEventPageProps {
@@ -52,6 +69,9 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<EventParticipant[]>([]);
+  const [participantsLoading, setParticipantsLoading] = useState(false);
 
   useEffect(() => {
     if (visible && eventId) {
@@ -59,9 +79,35 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
     }
   }, [visible, eventId]);
 
+  // Helper function to clean image URLs
+  const cleanImageUrl = (url: string) => {
+    if (!url) return null;
+    
+    // Remove $0 suffix and other common issues
+    let cleaned = url.replace(/\$0$/, '').trim();
+    
+    // Remove URL parameters (everything after ?)
+    cleaned = cleaned.split('?')[0];
+    
+    // Ensure it's a valid URL
+    try {
+      new URL(cleaned);
+      return cleaned;
+    } catch {
+      console.log('Invalid URL:', url);
+      return null;
+    }
+  };
+
   const fetchEventDetails = async (id: string) => {
     setLoading(true);
     setError(null);
+    
+    // Get current user ID
+    const { data: userData } = await getCurrentUserProfile();
+    if (userData) {
+      setCurrentUserId(userData.id);
+    }
     
     const { data, error } = await getEventById(id);
     
@@ -69,10 +115,36 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
       setError('Failed to load event details.');
       console.error('Error fetching event:', error);
     } else {
-      setEvent(data);
+      // Clean the image URL before setting the event
+      const cleanedData = {
+        ...data,
+        image_url: data?.image_url ? cleanImageUrl(data.image_url) : null
+      };
+      setEvent(cleanedData);
+      
+      // If user is the owner, fetch participants
+      if (userData && data?.created_by === userData.id) {
+        fetchParticipants(id);
+      }
     }
     
     setLoading(false);
+  };
+
+  const fetchParticipants = async (eventId: string) => {
+    setParticipantsLoading(true);
+    try {
+      const { data, error } = await getEventParticipants(eventId);
+      if (error) {
+        console.error('Error fetching participants:', error);
+      } else {
+        setParticipants(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching participants:', error);
+    } finally {
+      setParticipantsLoading(false);
+    }
   };
 
   // Format date/time for display
@@ -107,6 +179,32 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
     return 'Location TBD';
   };
 
+  // Handle share functionality
+  const handleShare = async () => {
+    if (!event) return;
+
+    try {
+      const shareMessage = `Check out this volunteering opportunity!\n\n${event.title}\nOrganized by: ${event.organizations?.name || 'Organization'}\n\n${formatEventTime(event.starts_at, event.ends_at)}\n${getLocationText()}\n\n${event.description ? `${event.description.substring(0, 100)}...` : 'Join us for a great cause!'}\n\nDownload the app to join this event!`;
+
+      const result = await Share.share({
+        message: shareMessage,
+        title: event.title,
+      });
+
+      if (result.action === Share.sharedAction) {
+        // Share was successful
+        console.log('Event shared successfully');
+      } else if (result.action === Share.dismissedAction) {
+        // Share was dismissed
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      console.error('Error sharing event:', error);
+      Alert.alert('Error', 'Failed to share event. Please try again.');
+    }
+  };
+
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -135,10 +233,19 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
         <View style={styles.headerContainer}>
           {/* Event Image Banner */}
           <View style={styles.bannerContainer}>
-            <View style={styles.imagePlaceholder}>
-              <Ionicons name="calendar" size={56} color={colors.primary} style={styles.placeholderIcon} />
-              <Text style={styles.placeholderText}>Event Image</Text>
-            </View>
+            {event?.image_url ? (
+              <Image
+                source={{ uri: event.image_url }}
+                style={styles.bannerImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <Ionicons name="calendar" size={56} color={colors.primary} style={styles.placeholderIcon} />
+                <Text style={styles.placeholderText}>Event Image</Text>
+              </View>
+            )}
+            
             
             {/* Navigation Buttons */}
             <TouchableOpacity
@@ -150,7 +257,7 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
             
             <TouchableOpacity
               style={[styles.navButton, styles.shareButton]}
-              onPress={() => console.log('Share event')}
+              onPress={handleShare}
             >
               <Ionicons name="share-outline" size={26} color={colors.textPrimary} />
             </TouchableOpacity>
@@ -227,6 +334,58 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
             </View>
           )}
 
+          {/* Participants Section - Only show for event owners */}
+          {currentUserId === event.created_by && (
+            <View style={styles.participantsCard}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.participantsHeading}>Participants ({participants.length})</Text>
+              </View>
+              
+              {participantsLoading ? (
+                <View style={styles.participantsLoading}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={styles.participantsLoadingText}>Loading participants...</Text>
+                </View>
+              ) : participants.length > 0 ? (
+                <View style={styles.participantsList}>
+                  {/* Header Row */}
+                  <View style={styles.participantHeaderRow}>
+                    <Text style={styles.participantHeaderText}>Name</Text>
+                    <Text style={styles.participantHeaderText}>Checked In</Text>
+                  </View>
+                  
+                  {/* Participant Rows */}
+                  {participants.map((participant) => (
+                    <View key={participant.id} style={styles.participantRow}>
+                      <View style={styles.participantInfo}>
+                        {participant.avatarUrl ? (
+                          <Image
+                            source={{ uri: participant.avatarUrl }}
+                            style={styles.participantAvatar}
+                          />
+                        ) : (
+                          <View style={styles.participantAvatarPlaceholder}>
+                            <Ionicons name="person" size={16} color={colors.textSecondary} />
+                          </View>
+                        )}
+                        <Text style={styles.participantName}>{participant.displayName}</Text>
+                      </View>
+                      <View style={styles.checkInStatus}>
+                        {participant.checkedIn ? (
+                          <Ionicons name="checkmark-circle" size={20} color={colors.success || '#4CAF50'} />
+                        ) : (
+                          <Ionicons name="ellipse-outline" size={20} color={colors.textSecondary} />
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.noParticipantsText}>No participants yet</Text>
+              )}
+            </View>
+          )}
+
           {/* Bottom spacing for sticky button */}
           <View style={styles.bottomSpacing} />
         </ScrollView>
@@ -237,7 +396,12 @@ const SpecificEventPage: React.FC<SpecificEventPageProps> = ({
             <EventCallToActionButton
               eventId={event.id}
               style={styles.joinButton}
+              isOwner={currentUserId === event.created_by}
               onJoined={() => {
+                onClose();
+                onJoinSuccess && onJoinSuccess();
+              }}
+              onLeft={() => {
                 onClose();
                 onJoinSuccess && onJoinSuccess();
               }}
@@ -314,6 +478,10 @@ const getStyles = (colors: ColorScheme) =>
       borderTopLeftRadius: 0,
       borderTopRightRadius: 0,
     },
+    bannerImage: {
+      width: '100%',
+      height: '100%',
+    },
     imagePlaceholder: {
       flex: 1,
       justifyContent: 'center',
@@ -364,7 +532,7 @@ const getStyles = (colors: ColorScheme) =>
     mainInfoCard: {
       backgroundColor: colors.surface,
       marginHorizontal: 20,
-      marginTop: -16,
+      marginTop: -12,
       borderRadius: 20,
       padding: 24,
       shadowColor: colors.shadow,
@@ -376,6 +544,8 @@ const getStyles = (colors: ColorScheme) =>
       shadowRadius: 16,
       elevation: 8,
       zIndex: 1,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
     },
     eventTitle: {
       fontSize: 28,
@@ -473,6 +643,105 @@ const getStyles = (colors: ColorScheme) =>
       color: colors.textSecondary,
       lineHeight: 24,
       fontWeight: '400',
+    },
+    participantsCard: {
+      backgroundColor: colors.surface,
+      marginHorizontal: 20,
+      marginTop: 20,
+      borderRadius: 20,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+    participantsHeading: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: colors.textPrimary,
+    },
+    participantsLoading: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 20,
+    },
+    participantsLoadingText: {
+      marginLeft: 8,
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    participantsList: {
+      marginTop: 16,
+    },
+    participantHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      backgroundColor: colors.background,
+      borderRadius: 8,
+      marginBottom: 8,
+    },
+    participantHeaderText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    participantRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      backgroundColor: colors.background,
+      borderRadius: 8,
+      marginBottom: 4,
+    },
+    participantInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    participantAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      marginRight: 12,
+    },
+    participantAvatarPlaceholder: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.borderLight || '#E5E5E5',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    participantName: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.textPrimary,
+      flex: 1,
+    },
+    checkInStatus: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 24,
+    },
+    noParticipantsText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+      paddingVertical: 20,
     },
     bottomSpacing: {
       height: 40,

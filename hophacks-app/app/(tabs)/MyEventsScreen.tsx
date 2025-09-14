@@ -97,6 +97,12 @@ const MyEventsScreen = () => {
     setSelectedEventId(null);
   };
 
+  const handleEventLeft = () => {
+    closeEvent();
+    // Refresh the joined events list
+    fetchJoinedEvents(currentUserId || undefined);
+  };
+
   const formatDateLabel = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString(undefined, {
@@ -164,7 +170,7 @@ const MyEventsScreen = () => {
           eventId={selectedEventId}
           visible={eventPageVisible}
           onClose={closeEvent}
-          onJoinSuccess={closeEvent}
+          onJoinSuccess={handleEventLeft}
         />
       )}
 
