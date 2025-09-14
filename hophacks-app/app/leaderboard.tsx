@@ -29,7 +29,7 @@ const LeaderboardScreen = () => {
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const { colors, theme } = useTheme();
-  const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const styles = React.useMemo(() => createStyles(colors, theme), [colors, theme]);
 
   // Set dynamic title
   useEffect(() => {
@@ -84,7 +84,7 @@ const LeaderboardScreen = () => {
   const getRankColor = (rank: number) => {
     switch (rank) {
       case 1:
-        return colors.groupGold;
+        return theme === 'dark' ? colors.groupGoldDark : colors.groupGold;
       case 2:
         return colors.groupSilver;
       case 3:
@@ -112,7 +112,8 @@ const LeaderboardScreen = () => {
             key={member.id} 
             style={[
               styles.memberRow,
-              member.isCurrentUser && styles.currentUserRow
+              member.isCurrentUser && styles.currentUserRow,
+              member.rank === 1 && styles.firstPlaceRow
             ]}
           >
             <View style={styles.rankSection}>
@@ -152,7 +153,7 @@ const LeaderboardScreen = () => {
   );
 };
 
-const createStyles = (colors: ColorScheme) => StyleSheet.create({
+const createStyles = (colors: ColorScheme, theme: 'light' | 'dark') => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -183,6 +184,11 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   },
   currentUserRow: {
     backgroundColor: colors.primaryLight,
+  },
+  firstPlaceRow: {
+    backgroundColor: theme === 'dark' ? '#2D2D1A' : '#FFF8DC', // Dark gold background for dark mode, light gold for light mode
+    borderLeftWidth: 4,
+    borderLeftColor: theme === 'dark' ? colors.groupGoldDark : colors.groupGold,
   },
   rankSection: {
     width: 40,

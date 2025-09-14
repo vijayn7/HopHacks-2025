@@ -618,8 +618,7 @@ export async function getGroupLeaderboard(groupId: string) {
         profiles (
           id,
           display_name,
-          avatar_url,
-          total_points
+          avatar_url
         )
       `)
       .eq('group_id', groupId);
@@ -690,7 +689,6 @@ export async function getGroupMembers(groupId: string) {
           id,
           display_name,
           avatar_url,
-          total_points,
           current_streak_weeks,
           longest_streak
         )
@@ -1478,19 +1476,6 @@ export async function checkOutFromEvent(eventId: string) {
     reason: eventData?.title || 'Event participation',
     hours: Math.round(minutes / 60),
   });
-
-  // Update user total points
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('total_points')
-    .eq('id', userId)
-    .single();
-  if (profile) {
-    await supabase
-      .from('profiles')
-      .update({ total_points: (profile.total_points || 0) + points })
-      .eq('id', userId);
-  }
 
   return { data, error: null };
 }
