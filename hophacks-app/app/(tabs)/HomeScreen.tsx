@@ -60,14 +60,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ isActive }) => {
   // Helper function to clean image URLs and provide fallbacks
   const cleanImageUrl = (url: string | null | undefined) => {
     if (!url) return null;
-    
-    // Remove $0 suffix and other common issues
-    let cleaned = url.replace(/\$0$/, '').trim();
-    
-    // Remove URL parameters (everything after ?)
-    cleaned = cleaned.split('?')[0];
-    
-    // Ensure it's a valid URL
+    const cleaned = url.replace(/\$0$/, '').trim();
     try {
       new URL(cleaned);
       return cleaned;
@@ -247,6 +240,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ isActive }) => {
     setSelectedEventId(null);
   };
 
+  const avatarUri = cleanImageUrl(user.avatar);
+
   const handleEventJoined = (id: string) => {
     if (!animations.current[id]) {
       animations.current[id] = {
@@ -293,11 +288,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ isActive }) => {
       {/* Profile Widget */}
       <View style={styles.profileWidget}>
         <View style={styles.profileIcon}>
-          {user.avatar ? (
-            <Image
-              source={{ uri: cleanImageUrl(user.avatar) || undefined }}
-              style={styles.profileImage}
-            />
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={styles.profileImage} />
           ) : (
             <Text style={styles.profileIconText}>
               {user.name.charAt(0).toUpperCase()}

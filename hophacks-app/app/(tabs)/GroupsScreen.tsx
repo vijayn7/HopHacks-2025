@@ -314,14 +314,14 @@ const GroupsScreen: React.FC<GroupsScreenProps> = ({ isActive }) => {
                 <Text style={styles.topMemberLabel}>Leading the way</Text>
                 <View style={styles.topMemberRow}>
                   <View style={styles.topMemberAvatar}>
-                    {group.topMember.avatar ? (
-                      <Image
-                        source={{ uri: cleanImageUrl(group.topMember.avatar) || undefined }}
-                        style={styles.avatarImage}
-                      />
-                    ) : (
-                      <Text style={styles.avatarText}>{group.topMember.name.charAt(0)}</Text>
-                    )}
+              {(() => {
+                const avatarUri = cleanImageUrl(group.topMember.avatar);
+                return avatarUri ? (
+                  <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.avatarText}>{group.topMember.name.charAt(0)}</Text>
+                );
+              })()}
                   </View>
                   <Text style={styles.topMemberName}>{group.topMember.name}</Text>
                 </View>

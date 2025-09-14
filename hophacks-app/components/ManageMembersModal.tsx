@@ -188,16 +188,19 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({
                 <View key={member.id} style={styles.memberItem}>
                   <View style={styles.memberInfo}>
                     <View style={styles.memberAvatar}>
-                      {member.avatar ? (
-                        <Image
-                          source={{ uri: cleanImageUrl(member.avatar) || undefined }}
-                          style={styles.avatarImage}
-                        />
-                      ) : (
-                        <Text style={styles.avatarText}>
-                          {member.name.charAt(0).toUpperCase()}
-                        </Text>
-                      )}
+                      {(() => {
+                        const avatarUri = cleanImageUrl(member.avatar);
+                        return avatarUri ? (
+                          <Image
+                            source={{ uri: avatarUri }}
+                            style={styles.avatarImage}
+                          />
+                        ) : (
+                          <Text style={styles.avatarText}>
+                            {member.name.charAt(0).toUpperCase()}
+                          </Text>
+                        );
+                      })()}
                     </View>
                     <View style={styles.memberDetails}>
                       <View style={styles.memberNameRow}>

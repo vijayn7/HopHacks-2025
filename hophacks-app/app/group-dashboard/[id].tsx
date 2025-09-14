@@ -279,14 +279,14 @@ const GroupDashboardScreen = () => {
                 <Text style={styles.rankNumber}>#{member.rank}</Text>
               </View>
               <View style={styles.memberAvatar}>
-                {member.avatar ? (
-                  <Image
-                    source={{ uri: cleanImageUrl(member.avatar) || undefined }}
-                    style={styles.avatarImage}
-                  />
-                ) : (
-                  <Text style={styles.avatarText}>{member.name.charAt(0)}</Text>
-                )}
+                {(() => {
+                  const avatarUri = cleanImageUrl(member.avatar);
+                  return avatarUri ? (
+                    <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={styles.avatarText}>{member.name.charAt(0)}</Text>
+                  );
+                })()}
               </View>
               <View style={styles.memberInfo}>
                 <Text style={styles.memberName}>{member.name}</Text>
@@ -330,18 +330,24 @@ const GroupDashboardScreen = () => {
           <View style={styles.membersPreview}>
             <View style={styles.avatarCluster}>
               {group.members.slice(0, 4).map((member, index) => (
-                <View key={member.id} style={[
-                  styles.clusterAvatar,
-                  { marginLeft: index > 0 ? -8 : 0 }
-                ]}>
-                {member.avatar ? (
-                  <Image
-                    source={{ uri: cleanImageUrl(member.avatar) || undefined }}
-                    style={styles.clusterAvatarImage}
-                  />
-                ) : (
-                  <Text style={styles.clusterAvatarText}>{member.name.charAt(0)}</Text>
-                )}
+                <View
+                  key={member.id}
+                  style={[
+                    styles.clusterAvatar,
+                    { marginLeft: index > 0 ? -8 : 0 }
+                  ]}
+                >
+                  {(() => {
+                    const avatarUri = cleanImageUrl(member.avatar);
+                    return avatarUri ? (
+                      <Image
+                        source={{ uri: avatarUri }}
+                        style={styles.clusterAvatarImage}
+                      />
+                    ) : (
+                      <Text style={styles.clusterAvatarText}>{member.name.charAt(0)}</Text>
+                    );
+                  })()}
                 </View>
               ))}
               {group.memberCount > 4 && (
