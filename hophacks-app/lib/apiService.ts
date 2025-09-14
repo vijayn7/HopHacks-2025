@@ -1380,6 +1380,29 @@ export async function joinEvent(eventId: string) {
   return { data, error };
 }
 
+export async function leaveEvent(eventId: string) {
+  const userId = await authService.getCurrentUserId();
+  const { data, error } = await supabase
+    .from('joins')
+    .delete()
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+  return { data, error };
+}
+
+export async function checkIfUserJoinedEvent(eventId: string) {
+  const userId = await authService.getCurrentUserId();
+  const { data, error } = await supabase
+    .from('joins')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .single();
+  return { data: data !== null, error };
+}
+
 export async function checkInToEvent(eventId: string) {
   const userId = await authService.getCurrentUserId();
   const { data: join, error: joinError } = await supabase
@@ -1570,4 +1593,74 @@ export async function createEvent(event: {
     .single();
 
   return { data, error };
+}
+
+/**
+ * Gets all participants for a specific event (only accessible by event owner)
+ * @param eventId - The UUID of the event
+ * @returns Array of participants with their check-in status
+ */
+export async function getEventParticipants(eventId: string) {
+  const userId = await authService.getCurrentUserId();
+  if (!userId) {
+    return { data: null, error: { message: 'User not authenticated' } };
+  }
+
+  try {
+    // First check if the user is the owner of the event
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select('created_by')
+      .eq('id', eventId)
+      .single();
+
+    if (eventError || !event) {
+      return { data: null, error: eventError || { message: 'Event not found' } };
+    }
+
+    if (event.created_by !== userId) {
+      return { data: null, error: { message: 'Only event owners can view participants' } };
+    }
+
+    // Get all participants for the event
+    const { data, error } = await supabase
+      .from('joins')
+      .select(`
+        id,
+        user_id,
+        check_in_at,
+        check_out_at,
+        status,
+        created_at,
+        profiles!joins_user_id_fkey (
+          id,
+          display_name,
+          avatar_url
+        )
+      `)
+      .eq('event_id', eventId)
+      .eq('status', 'joined')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    // Transform the data
+    const participants = data?.map((join: any) => ({
+      id: join.id,
+      userId: join.user_id,
+      displayName: join.profiles?.display_name || 'Unknown User',
+      avatarUrl: join.profiles?.avatar_url,
+      checkedIn: !!join.check_in_at,
+      checkedOut: !!join.check_out_at,
+      joinedAt: join.created_at,
+      checkInAt: join.check_in_at,
+      checkOutAt: join.check_out_at,
+    })) || [];
+
+    return { data: participants, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
 }

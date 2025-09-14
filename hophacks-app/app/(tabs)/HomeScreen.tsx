@@ -50,6 +50,26 @@ const HomeScreen = () => {
       }
     }, []);
 
+  // Helper function to clean image URLs and provide fallbacks
+  const cleanImageUrl = (url: string) => {
+    if (!url) return null;
+    
+    // Remove $0 suffix and other common issues
+    let cleaned = url.replace(/\$0$/, '').trim();
+    
+    // Remove URL parameters (everything after ?)
+    cleaned = cleaned.split('?')[0];
+    
+    // Ensure it's a valid URL
+    try {
+      new URL(cleaned);
+      return cleaned;
+    } catch {
+      console.log('Invalid URL:', url);
+      return null;
+    }
+  };
+
   // Helper function to determine tier based on points
   const getTierInfo = (points: number) => {
     if (points >= 2000) {
@@ -134,19 +154,26 @@ const HomeScreen = () => {
           console.log('Error fetching events:', eventsError);
         } else if (eventsData) {
           // Transform the data to match the expected format
-          const transformedEvents = eventsData.map((event: any) => ({
-            id: event.id,
-            title: event.title,
-            description: event.description,
-            cause: event.cause,
-            starts_at: event.starts_at,
-            ends_at: event.ends_at,
-            lat: event.lat,
-            lng: event.lng,
-            capacity: event.capacity,
-            org_name: event.organizations?.name || 'Unknown Organization',
-            distance: '-- mi away', // You might want to calculate this based on user location
-          }));
+          const transformedEvents = eventsData.map((event: any) => {
+            console.log('🔍 Raw event data:', event);
+            console.log('🖼️ Event image_url (raw):', event.image_url);
+            const cleanedUrl = event.image_url ? cleanImageUrl(event.image_url) : null;
+            console.log('🧹 Event image_url (cleaned):', cleanedUrl);
+            return {
+              id: event.id,
+              title: event.title,
+              description: event.description,
+              cause: event.cause,
+              starts_at: event.starts_at,
+              ends_at: event.ends_at,
+              lat: event.lat,
+              lng: event.lng,
+              capacity: event.capacity,
+              org_name: event.organizations?.name || 'Unknown Organization',
+              distance: '-- mi away', // You might want to calculate this based on user location
+              image_url: cleanedUrl,
+            };
+          });
           setSuggestedEvents(transformedEvents);
         }
 

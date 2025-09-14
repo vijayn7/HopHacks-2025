@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
@@ -18,6 +18,7 @@ export interface EventsEventCardProps {
   capacity?: number;
   org_name?: string;
   distance?: string;
+  image_url?: string | null;
   onPress?: () => void;
   showLearnMoreButton?: boolean;
   isOwner?: boolean;
@@ -36,6 +37,7 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
   capacity,
   org_name = 'Organization',
   distance = 'Location TBD',
+  image_url,
   onPress,
   showLearnMoreButton = true,
   isOwner = false,
@@ -76,6 +78,47 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
     return distance;
   };
 
+
+  // Get icon for cause/category
+  const getCauseIcon = (cause: string) => {
+    switch (cause) {
+      case 'food_security':
+        return 'restaurant';
+      case 'animal_welfare':
+        return 'paw';
+      case 'environment':
+        return 'leaf';
+      case 'education':
+        return 'school';
+      case 'health':
+        return 'medical';
+      case 'community':
+        return 'people';
+      default:
+        return 'heart';
+    }
+  };
+
+  // Get color for cause/category
+  const getCauseColor = (cause: string) => {
+    switch (cause) {
+      case 'food_security':
+        return '#4CAF50'; // Green
+      case 'animal_welfare':
+        return '#9C27B0'; // Purple
+      case 'environment':
+        return '#4CAF50'; // Green
+      case 'education':
+        return '#2196F3'; // Blue
+      case 'health':
+        return '#F44336'; // Red
+      case 'community':
+        return '#FF9800'; // Orange
+      default:
+        return colors.primary; // Default orange
+    }
+  };
+
   return (
     <TouchableOpacity
       style={styles.eventCard}
@@ -88,9 +131,22 @@ const EventsEventCard: React.FC<EventsEventCardProps> = ({
         </View>
       )}
       <View style={styles.eventHeader}>
-        {/* Event Image Placeholder */}
+        {/* Event Image */}
         <View style={styles.eventImageContainer}>
-          <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
+          {image_url ? (
+            <>
+              <Image
+                source={{ uri: image_url }}
+                style={styles.eventImage}
+                resizeMode="cover"
+              />
+            </>
+          ) : (
+            <View style={styles.debugContainer}>
+              <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
+              <Text style={styles.debugText}>No image</Text>
+            </View>
+          )}
         </View>
         
         {/* Event Info */}
@@ -192,6 +248,21 @@ const createStyles = (colors: ColorScheme) =>
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 12,
+      overflow: 'hidden',
+    },
+    eventImage: {
+      width: '100%',
+      height: '100%',
+    },
+    debugContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    debugText: {
+      fontSize: 10,
+      color: colors.textSecondary,
+      marginTop: 4,
+      textAlign: 'center',
     },
     eventInfo: {
       flex: 1,
