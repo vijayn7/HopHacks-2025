@@ -67,10 +67,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
 
   useEffect(() => {
     loadProfile();
-  }, []);
+    const interval = setInterval(() => {
+      if (!editMode) loadProfile(true);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [editMode]);
 
-  const loadProfile = async () => {
+  const loadProfile = async (background = false) => {
     try {
+      if (!background) setLoading(true);
       const [profileResult, emailResult, totalPointsResult, currentStreakResult, longestStreakResult] = await Promise.all([
         getCurrentUserProfile(),
         authService.getCurrentUserEmail(),
@@ -80,7 +85,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
       ]);
 
       if (profileResult.error) {
-        Alert.alert('Error', 'Failed to load profile');
+        if (!background) Alert.alert('Error', 'Failed to load profile');
         return;
       }
 
@@ -91,14 +96,14 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
         const bioValue = profileResult.data.bio || '';
         const locationValue = profileResult.data.location || '';
         const birthDateValue = profileResult.data.birth_date || '';
-        
+
         // Set both working and original values
         setDisplayName(displayNameValue);
         setPhone(phoneValue);
         setBio(bioValue);
         setLocation(locationValue);
         setBirthDate(birthDateValue);
-        
+
         setOriginalDisplayName(displayNameValue);
         setOriginalPhone(phoneValue);
         setOriginalBio(bioValue);
@@ -122,9 +127,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
         setCalculatedLongestStreak(longestStreakResult.data);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to load profile');
+      if (!background) Alert.alert('Error', 'Failed to load profile');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   };
 
