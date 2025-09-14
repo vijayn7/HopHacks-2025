@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
@@ -33,19 +34,24 @@ interface GroupSummary {
   };
 }
 
-const GroupsScreen = () => {
+interface GroupsScreenProps {
+  isActive: boolean;
+}
+
+const GroupsScreen: React.FC<GroupsScreenProps> = ({ isActive }) => {
   const [groups, setGroups] = useState<GroupSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [createdGroup, setCreatedGroup] = useState<any>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const { colors, theme } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   // Load groups from database
-  const loadGroups = async () => {
+  const loadGroups = async (background = false) => {
     try {
-      setLoading(true);
+      if (!background) setLoading(true);
       const { data: groupsData, error } = await getUserGroups();
       
       if (error) {
@@ -72,18 +78,32 @@ const GroupsScreen = () => {
       console.error('Error loading groups:', error);
       Alert.alert('Error', 'Failed to load groups. Please try again.');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadGroups(true);
+    setRefreshing(false);
   };
 
   useEffect(() => {
     loadGroups();
+    const interval = setInterval(() => loadGroups(true), 60000);
+    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isActive) {
+      loadGroups(true);
+    }
+  }, [isActive]);
 
   // Reload groups when screen comes into focus (e.g., returning from group dashboard)
   useFocusEffect(
     React.useCallback(() => {
-      loadGroups();
+      loadGroups(true);
     }, [])
   );
 
@@ -177,24 +197,46 @@ const GroupsScreen = () => {
 
   if (groups.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="people-outline" size={64} color={colors.textSecondary} />
-        <Text style={styles.emptyTitle}>No Groups Yet</Text>
-        <Text style={styles.emptySubtitle}>Join or create a group to start competing with friends!</Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.createGroupButton} onPress={handleCreateGroup}>
-            <Text style={styles.createGroupButtonText}>Create Group</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.joinGroupButton} onPress={handleJoinGroup}>
-            <Text style={styles.joinGroupButtonText}>Join Group</Text>
-          </TouchableOpacity>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        }
+      >
+        <View style={styles.emptyContainer}>
+          <Ionicons name="people-outline" size={64} color={colors.textSecondary} />
+          <Text style={styles.emptyTitle}>No Groups Yet</Text>
+          <Text style={styles.emptySubtitle}>Join or create a group to start competing with friends!</Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.createGroupButton} onPress={handleCreateGroup}>
+              <Text style={styles.createGroupButtonText}>Create Group</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.joinGroupButton} onPress={handleJoinGroup}>
+              <Text style={styles.joinGroupButtonText}>Join Group</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     );
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+        />
+      }
+    >
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Groups</Text>

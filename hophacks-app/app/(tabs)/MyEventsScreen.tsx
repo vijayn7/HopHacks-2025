@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import MyEventsEventCard, { MyEventsEventCardProps } from '../../components/MyEvents/MyEventsEventCard';
@@ -14,7 +14,11 @@ interface JoinedEvent extends MyEventsEventCardProps {
 
 type EventsByDate = Record<string, JoinedEvent[]>;
 
-const MyEventsScreen = () => {
+interface MyEventsScreenProps {
+  isActive: boolean;
+}
+
+const MyEventsScreen: React.FC<MyEventsScreenProps> = ({ isActive }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -25,28 +29,39 @@ const MyEventsScreen = () => {
   const [eventPageVisible, setEventPageVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     init();
+    const interval = setInterval(() => init(true), 60000);
+    return () => clearInterval(interval);
   }, []);
 
-  const init = async () => {
+  useEffect(() => {
+    if (isActive) {
+      init(true);
+    }
+  }, [isActive]);
+
+  const init = async (background = false) => {
     const { data } = await getCurrentUserProfile();
     if (data) {
       setCurrentUserId(data.id);
     }
-    fetchJoinedEvents(data?.id);
+    fetchJoinedEvents(data?.id, background);
   };
 
-  const fetchJoinedEvents = async (userId?: string) => {
+  const fetchJoinedEvents = async (userId?: string, background = false) => {
     try {
-      setLoading(true);
-      setError(null);
+      if (!background) {
+        setLoading(true);
+        setError(null);
+      }
 
       const { data, error } = await getJoinedEvents();
 
       if (error) {
-        setError(error.message || 'Failed to fetch events');
+        if (!background) setError(error.message || 'Failed to fetch events');
         return;
       }
 
@@ -81,10 +96,16 @@ const MyEventsScreen = () => {
 
       setEventsByDate(grouped);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch events');
+      if (!background) setError(err instanceof Error ? err.message : 'Failed to fetch events');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await init(true);
+    setRefreshing(false);
   };
 
   const openEvent = (id: string) => {
@@ -100,7 +121,7 @@ const MyEventsScreen = () => {
   const handleEventLeft = () => {
     closeEvent();
     // Refresh the joined events list
-    fetchJoinedEvents(currentUserId || undefined);
+    fetchJoinedEvents(currentUserId || undefined, true);
   };
 
   const formatDateLabel = (dateStr: string) => {
@@ -123,9 +144,20 @@ const MyEventsScreen = () => {
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-      </View>
+      <ScrollView
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        }
+      >
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Error: {error}</Text>
+        </View>
+      </ScrollView>
     );
   }
 
@@ -135,7 +167,17 @@ const MyEventsScreen = () => {
 
   return (
     <>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        }
+      >
         {sortedDates.length > 0 ? (
           sortedDates.map((date) => (
             <View key={date} style={styles.dateSection}>
