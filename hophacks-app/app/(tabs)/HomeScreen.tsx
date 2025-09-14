@@ -11,6 +11,7 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  Image,
 } from 'react-native'
 import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../../context/ThemeContext';
@@ -22,11 +23,23 @@ import { authService } from '../../lib/authService';
 import { router } from 'expo-router';
 import SpecificEventPage from '../../components/SpecificEventPage';
 
+type UserProfile = {
+  name: string;
+  avatarUrl: string | null;
+  streak: number;
+  totalPoints: number;
+  currentTier: string;
+  nextTier: string;
+  pointsToNextTier: number;
+  tierProgress: number;
+};
+
 const HomeScreen = () => {
   // Mock data - replace with real data later
 
-  const [user, setUser] = useState({
+  const [user, setUser] = useState<UserProfile>({
     name: "Alex Johnson", // fallback name
+    avatarUrl: null,
     streak: 0,
     totalPoints: 0,
     currentTier: "New Volunteer",
@@ -130,6 +143,7 @@ const HomeScreen = () => {
 
         setUser({
           name: userData.display_name || "Volunteer",
+          avatarUrl: userData.avatar_url,
           streak: calculatedStreak,
           totalPoints: calculatedPoints,
           currentTier: tierInfo.currentTier,
@@ -262,11 +276,15 @@ const HomeScreen = () => {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Profile Widget */}
       <View style={styles.profileWidget}>
-        <View style={styles.profileIcon}>
-          <Text style={styles.profileIconText}>
-            {user.name.charAt(0).toUpperCase()}
-          </Text>
-        </View>
+        {user.avatarUrl ? (
+          <Image source={{ uri: user.avatarUrl }} style={styles.profileImage} />
+        ) : (
+          <View style={styles.profileIcon}>
+            <Text style={styles.profileIconText}>
+              {user.name.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
         <View style={styles.profileInfo}>
           <Text style={styles.userName}>{user.name}</Text>
           <View style={styles.streakContainer}>
@@ -436,6 +454,12 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 20,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     marginRight: 20,
   },
   profileIconText: {
