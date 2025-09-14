@@ -671,6 +671,15 @@ export async function getGroupLeaderboard(groupId: string) {
 }
 
 /**
+ * Helper function to get week number of the year
+ */
+function getWeekNumber(date: Date): number {
+  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+  const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+}
+
+/**
  * Gets detailed member information for a specific group
  * @param groupId - The UUID of the group
  * @returns {Promise<{ data: any[] | null, error: any }>} Group members with stats or error
@@ -688,9 +697,7 @@ export async function getGroupMembers(groupId: string) {
         profiles (
           id,
           display_name,
-          avatar_url,
-          current_streak_weeks,
-          longest_streak
+          avatar_url
         )
       `)
       .eq('group_id', groupId);
@@ -704,20 +711,54 @@ export async function getGroupMembers(groupId: string) {
     // Get current month's points and hours for each member
     const { data: pointsData } = await supabase
       .from('points_ledger')
-      .select('user_id, delta_points, hours')
+      .select('user_id, delta_points, hours, created_at')
       .in('user_id', memberIds)
       .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
       .lt('created_at', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString());
 
-    // Calculate current month stats for each member
+    // Calculate current month stats and streak for each member
     const memberStats = pointsData?.reduce((acc, entry) => {
       if (!acc[entry.user_id]) {
-        acc[entry.user_id] = { points: 0, hours: 0 };
+        acc[entry.user_id] = { points: 0, hours: 0, activityDates: new Set() };
       }
       acc[entry.user_id].points += entry.delta_points || 0;
       acc[entry.user_id].hours += entry.hours || 0;
+      if (entry.created_at) {
+        acc[entry.user_id].activityDates.add(new Date(entry.created_at).toDateString());
+      }
       return acc;
-    }, {} as Record<string, { points: number; hours: number }>) || {};
+    }, {} as Record<string, { points: number; hours: number; activityDates: Set<string> }>) || {};
+
+    // Calculate streak for each member
+    const memberStreaks = Object.keys(memberStats).reduce((acc, userId) => {
+      const activityDates = Array.from(memberStats[userId].activityDates).sort();
+      let currentStreak = 0;
+      
+      // Calculate current streak (consecutive weeks with activity)
+      const now = new Date();
+      const currentWeek = getWeekNumber(now);
+      
+      for (let i = currentWeek; i >= 0; i--) {
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - (now.getDay() + (i * 7)));
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
+        const hasActivity = activityDates.some(dateStr => {
+          const date = new Date(dateStr);
+          return date >= weekStart && date <= weekEnd;
+        });
+        
+        if (hasActivity) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+      
+      acc[userId] = currentStreak;
+      return acc;
+    }, {} as Record<string, number>);
 
     // Get current user ID for highlighting
     const currentUserId = await authService.getCurrentUserId();
@@ -726,7 +767,8 @@ export async function getGroupMembers(groupId: string) {
     const transformedMembers = members
       .filter((member: any) => member.profiles?.id)
       .map((member: any) => {
-        const stats = memberStats[member.user_id] || { points: 0, hours: 0 };
+        const stats = memberStats[member.user_id] || { points: 0, hours: 0, activityDates: new Set() };
+        const streak = memberStreaks[member.user_id] || 0;
         return {
           id: member.profiles.id,
           name: member.profiles.display_name || 'Unknown',
@@ -734,7 +776,7 @@ export async function getGroupMembers(groupId: string) {
           isCurrentUser: member.user_id === currentUserId,
           joinDate: member.joined_at,
           totalHours: Math.round(stats.hours),
-          currentStreak: member.profiles.current_streak_weeks || 0,
+          currentStreak: streak,
           isAdmin: member.is_admin,
           role: member.role === 'creator' ? 'Group Creator' : 'Member'
         };

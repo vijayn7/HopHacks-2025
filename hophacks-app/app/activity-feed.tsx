@@ -163,12 +163,12 @@ const ActivityFeedScreen = () => {
                 )}
                 <View style={styles.activityMeta}>
                   <Text style={styles.activityPoints}>+{activity.points} points</Text>
-                  <View style={styles.activityTimeContainer}>
+                  <Text style={styles.activityTimeContainer}>
                     {isUserActivity && activity.hours && (
                       <Text style={styles.activityHours}>{activity.hours}h</Text>
                     )}
                     <Text style={styles.activityTime}>{activity.timestamp}</Text>
-                  </View>
+                  </Text>
                 </View>
               </View>
             </View>

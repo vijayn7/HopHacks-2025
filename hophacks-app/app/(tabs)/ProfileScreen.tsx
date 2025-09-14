@@ -22,8 +22,6 @@ interface Profile {
   id: string;
   display_name: string | null;
   role: string;
-  current_streak_weeks: number;
-  longest_streak: number;
   email?: string | null;
   phone?: string | null;
   bio?: string | null;

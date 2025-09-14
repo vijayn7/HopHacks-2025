@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
@@ -16,6 +16,7 @@ export interface MyEventsEventCardProps {
   capacity?: number;
   org_name?: string;
   distance?: string;
+  image_url?: string | null;
   onPress?: () => void;
   onScanPress?: () => void;
   showScanButton?: boolean;
@@ -35,6 +36,7 @@ const MyEventsEventCard: React.FC<MyEventsEventCardProps> = ({
   capacity,
   org_name = 'Organization',
   distance = 'Location TBD',
+  image_url,
   onPress,
   onScanPress,
   showScanButton = false,
@@ -43,6 +45,7 @@ const MyEventsEventCard: React.FC<MyEventsEventCardProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const [imageError, setImageError] = useState(false);
 
   const formatEventTime = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
@@ -93,7 +96,16 @@ const MyEventsEventCard: React.FC<MyEventsEventCardProps> = ({
     >
       <View style={styles.eventHeader}>
         <View style={styles.eventImageContainer}>
-          <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
+          {image_url && !imageError ? (
+            <Image
+              source={{ uri: image_url }}
+              style={styles.eventImage}
+              resizeMode="cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
+          )}
         </View>
         <View style={styles.eventInfo}>
           <Text style={styles.eventTitle}>{title}</Text>
@@ -201,6 +213,11 @@ const createStyles = (colors: ColorScheme) =>
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 12,
+      overflow: 'hidden',
+    },
+    eventImage: {
+      width: '100%',
+      height: '100%',
     },
     eventInfo: {
       flex: 1,
