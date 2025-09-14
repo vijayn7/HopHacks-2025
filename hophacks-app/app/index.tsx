@@ -46,23 +46,6 @@ export default function Index() {
     console.log(`Switched to ${tab} tab`);
   };
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'home':
-        return <HomeScreen />;
-      case 'events':
-        return <EventsScreen />;
-      case 'myEvents':
-        return <MyEventsScreen />;
-      case 'groups':
-        return <GroupsScreen />;
-      case 'profile':
-        return <ProfileScreen onSignOut={() => setIsAuthenticated(false)} />;
-      default:
-        return <HomeScreen />;
-    }
-  };
-
   if (isInitializing) {
     return (
       <View style={styles.loadingContainer}>
@@ -87,7 +70,23 @@ export default function Index() {
     <View style={styles.container}>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
       <SafeAreaView style={styles.safeArea}>
-        {renderTabContent()}
+        <View style={styles.screenContainer}>
+          <View style={[styles.tabView, activeTab !== 'home' && styles.hidden]}>
+            <HomeScreen />
+          </View>
+          <View style={[styles.tabView, activeTab !== 'events' && styles.hidden]}>
+            <EventsScreen />
+          </View>
+          <View style={[styles.tabView, activeTab !== 'myEvents' && styles.hidden]}>
+            <MyEventsScreen />
+          </View>
+          <View style={[styles.tabView, activeTab !== 'groups' && styles.hidden]}>
+            <GroupsScreen />
+          </View>
+          <View style={[styles.tabView, activeTab !== 'profile' && styles.hidden]}>
+            <ProfileScreen onSignOut={() => setIsAuthenticated(false)} />
+          </View>
+        </View>
       </SafeAreaView>
       <CustomTabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </View>
@@ -102,6 +101,15 @@ const createStyles = (colors: ColorScheme) =>
     },
     safeArea: {
       flex: 1,
+    },
+    screenContainer: {
+      flex: 1,
+    },
+    tabView: {
+      flex: 1,
+    },
+    hidden: {
+      display: 'none',
     },
     loadingContainer: {
       flex: 1,

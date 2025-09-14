@@ -110,93 +110,95 @@ const HomeScreen = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchUserAndEvents = async () => {
-      try {
-        setIsLoading(true);
+  const fetchUserAndEvents = async (background = false) => {
+    try {
+      if (!background) setIsLoading(true);
 
-        // Fetch user basic data (name only)
-        const { data: userData, error: userError } = await getUserInfoById();
-        
-        // Calculate points and streak from points_ledger
-        const { data: totalPoints, error: pointsError } = await calculateUserTotalPoints();
-        const { data: weeklyStreak, error: streakError } = await calculateUserWeeklyStreak();
-        
-        if (userError) {
-          console.log('Error fetching user:', userError);
-        } else if (userData) {
-          const calculatedPoints = totalPoints || 0;
-          const calculatedStreak = weeklyStreak || 0;
-          const tierInfo = getTierInfo(calculatedPoints);
-          
-          setUser({
-            name: userData.display_name || "Volunteer",
-            streak: calculatedStreak,
-            totalPoints: calculatedPoints,
-            currentTier: tierInfo.currentTier,
-            nextTier: tierInfo.nextTier,
-            pointsToNextTier: tierInfo.pointsToNextTier,
-            tierProgress: tierInfo.tierProgress,
-          });
-        }
-        
-        if (pointsError) {
-          console.log('Error calculating points:', pointsError);
-        }
-        if (streakError) {
-          console.log('Error calculating streak:', streakError);
-        }
+      // Fetch user basic data (name only)
+      const { data: userData, error: userError } = await getUserInfoById();
 
-        // Fetch event recommendations
-        const { data: eventsData, error: eventsError } = await getEventRecommendations();
+      // Calculate points and streak from points_ledger
+      const { data: totalPoints, error: pointsError } = await calculateUserTotalPoints();
+      const { data: weeklyStreak, error: streakError } = await calculateUserWeeklyStreak();
 
-        if (eventsError) {
-          console.log('Error fetching events:', eventsError);
-        } else if (eventsData) {
-          // Transform the data to match the expected format
-          const transformedEvents = eventsData.map((event: any) => {
-            console.log('🔍 Raw event data:', event);
-            console.log('🖼️ Event image_url (raw):', event.image_url);
-            const cleanedUrl = event.image_url ? cleanImageUrl(event.image_url) : null;
-            console.log('🧹 Event image_url (cleaned):', cleanedUrl);
-            return {
-              id: event.id,
-              title: event.title,
-              description: event.description,
-              cause: event.cause,
-              starts_at: event.starts_at,
-              ends_at: event.ends_at,
-              lat: event.lat,
-              lng: event.lng,
-              capacity: event.capacity,
-              org_name: event.organizations?.name || 'Unknown Organization',
-              distance: '-- mi away', // You might want to calculate this based on user location
-              image_url: cleanedUrl,
-            };
-          });
-          setSuggestedEvents(transformedEvents);
-        }
+      if (userError) {
+        console.log('Error fetching user:', userError);
+      } else if (userData) {
+        const calculatedPoints = totalPoints || 0;
+        const calculatedStreak = weeklyStreak || 0;
+        const tierInfo = getTierInfo(calculatedPoints);
 
-        // Fetch recent activity
-        const { data: activityData, error: activityError } = await getRecentActivity();
-        
-        if (activityError) {
-          console.log('Error fetching recent activity:', activityError);
-        } else if (activityData) {
-          console.log('Setting recent activity data:', activityData);
-          setRecentActivity(activityData);
-        } else {
-          console.log('No recent activity data received, setting empty array');
-          setRecentActivity([]);
-        }
-      } catch (error) {
-        console.log('Error in fetchUserAndEvents:', error);
-      } finally {
-        setIsLoading(false);
+        setUser({
+          name: userData.display_name || "Volunteer",
+          streak: calculatedStreak,
+          totalPoints: calculatedPoints,
+          currentTier: tierInfo.currentTier,
+          nextTier: tierInfo.nextTier,
+          pointsToNextTier: tierInfo.pointsToNextTier,
+          tierProgress: tierInfo.tierProgress,
+        });
       }
-    };
 
+      if (pointsError) {
+        console.log('Error calculating points:', pointsError);
+      }
+      if (streakError) {
+        console.log('Error calculating streak:', streakError);
+      }
+
+      // Fetch event recommendations
+      const { data: eventsData, error: eventsError } = await getEventRecommendations();
+
+      if (eventsError) {
+        console.log('Error fetching events:', eventsError);
+      } else if (eventsData) {
+        // Transform the data to match the expected format
+        const transformedEvents = eventsData.map((event: any) => {
+          console.log('🔍 Raw event data:', event);
+          console.log('🖼️ Event image_url (raw):', event.image_url);
+          const cleanedUrl = event.image_url ? cleanImageUrl(event.image_url) : null;
+          console.log('🧹 Event image_url (cleaned):', cleanedUrl);
+          return {
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            cause: event.cause,
+            starts_at: event.starts_at,
+            ends_at: event.ends_at,
+            lat: event.lat,
+            lng: event.lng,
+            capacity: event.capacity,
+            org_name: event.organizations?.name || 'Unknown Organization',
+            distance: '-- mi away', // You might want to calculate this based on user location
+            image_url: cleanedUrl,
+          };
+        });
+        setSuggestedEvents(transformedEvents);
+      }
+
+      // Fetch recent activity
+      const { data: activityData, error: activityError } = await getRecentActivity();
+
+      if (activityError) {
+        console.log('Error fetching recent activity:', activityError);
+      } else if (activityData) {
+        console.log('Setting recent activity data:', activityData);
+        setRecentActivity(activityData);
+      } else {
+        console.log('No recent activity data received, setting empty array');
+        setRecentActivity([]);
+      }
+    } catch (error) {
+      console.log('Error in fetchUserAndEvents:', error);
+    } finally {
+      if (!background) setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUserAndEvents();
+    const interval = setInterval(() => fetchUserAndEvents(true), 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleViewAllActivity = () => {
