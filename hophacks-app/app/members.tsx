@@ -34,7 +34,7 @@ const MembersScreen = () => {
   const [sortedMembers, setSortedMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const { colors, theme } = useTheme();
-  const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const styles = React.useMemo(() => createStyles(colors, theme), [colors, theme]);
 
   useEffect(() => {
     const loadMembers = async () => {
@@ -187,7 +187,7 @@ const MembersScreen = () => {
   );
 };
 
-const createStyles = (colors: ColorScheme) => StyleSheet.create({
+const createStyles = (colors: ColorScheme, theme: 'light' | 'dark') => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -232,12 +232,12 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     elevation: 2,
   },
   currentUserCard: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: theme === 'dark' ? '#2A1A0F' : '#FFF5F0', // Darker orange for dark mode for better contrast
     borderWidth: 2,
     borderColor: colors.primary,
   },
   adminCard: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: theme === 'dark' ? '#2A1A0F' : '#FFF5F0', // Darker orange for dark mode for better contrast
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
   },
@@ -282,7 +282,7 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
   },
   currentUserName: {
     fontWeight: '600',
-    color: colors.primary,
+    color: theme === 'dark' ? colors.textWhite : colors.textPrimary, // Better contrast for dark mode
   },
   adminBadge: {
     backgroundColor: colors.primary,

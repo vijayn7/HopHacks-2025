@@ -204,7 +204,9 @@ const createStyles = (colors: ColorScheme, theme: 'light' | 'dark') => StyleShee
     borderBottomColor: colors.borderLight,
   },
   currentUserRow: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: theme === 'dark' ? '#2A1A0F' : '#FFF5F0', // Darker orange for dark mode, light orange for light mode
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
   },
   firstPlaceRow: {
     backgroundColor: theme === 'dark' ? '#2D2D1A' : '#FFF8DC', // Dark gold background for dark mode, light gold for light mode
@@ -250,7 +252,7 @@ const createStyles = (colors: ColorScheme, theme: 'light' | 'dark') => StyleShee
   },
   currentUserName: {
     fontWeight: '600',
-    color: colors.primary,
+    color: theme === 'dark' ? colors.textWhite : colors.textPrimary, // Better contrast for dark mode
   },
   memberPoints: {
     fontSize: 14,
