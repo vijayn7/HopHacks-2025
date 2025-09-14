@@ -38,6 +38,7 @@ export const lightColors = {
   groupGold: '#FFD700',
   groupSilver: '#C0C0C0',
   groupBronze: '#CD7F32',
+  groupGoldDark: '#B8860B', // Darker gold for better contrast in dark mode
 
   // Event Category Colors
   foodSecurity: '#4CAF50',
@@ -57,7 +58,7 @@ export const lightColors = {
   badgePlatinum: '#E5E4E2',
 } as const;
 
-export const darkColors: typeof lightColors = {
+export const darkColors = {
   // Primary Colors
   primary: '#FF6B35',
   primaryLight: '#E55A2B',
@@ -97,6 +98,7 @@ export const darkColors: typeof lightColors = {
   groupGold: '#FFD700',
   groupSilver: '#C0C0C0',
   groupBronze: '#CD7F32',
+  groupGoldDark: '#B8860B', // Darker gold for better contrast in dark mode
 
   // Event Category Colors
   foodSecurity: '#4CAF50',
@@ -116,7 +118,9 @@ export const darkColors: typeof lightColors = {
   badgePlatinum: '#E5E4E2',
 };
 
-export type ColorScheme = typeof lightColors;
+export type ColorScheme = {
+  [K in keyof typeof lightColors]: string;
+};
 
 export const getThemeColors = (theme: 'light' | 'dark'): ColorScheme =>
   theme === 'dark' ? darkColors : lightColors;
