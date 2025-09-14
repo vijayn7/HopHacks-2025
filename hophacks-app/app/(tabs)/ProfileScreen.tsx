@@ -29,6 +29,7 @@ interface Profile {
   location?: string | null;
   birth_date?: string | null;
   created_at: string;
+  avatar_url?: string | null;
 }
 
 interface ProfileScreenProps {
@@ -57,6 +58,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) =>
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   
   // Original values (these are what's displayed in the header and used for cancel)
   const [originalDisplayName, setOriginalDisplayName] = useState('');
@@ -65,6 +67,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) =>
   const [originalBio, setOriginalBio] = useState('');
   const [originalLocation, setOriginalLocation] = useState('');
   const [originalBirthDate, setOriginalBirthDate] = useState('');
+  const [originalAvatarUrl, setOriginalAvatarUrl] = useState('');
 
   useEffect(() => {
     loadProfile();
@@ -103,6 +106,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) =>
         const bioValue = profileResult.data.bio || '';
         const locationValue = profileResult.data.location || '';
         const birthDateValue = profileResult.data.birth_date || '';
+        const avatarValue = profileResult.data.avatar_url || '';
 
         // Set both working and original values
         setDisplayName(displayNameValue);
@@ -110,12 +114,14 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) =>
         setBio(bioValue);
         setLocation(locationValue);
         setBirthDate(birthDateValue);
+        setAvatarUrl(avatarValue);
 
         setOriginalDisplayName(displayNameValue);
         setOriginalPhone(phoneValue);
         setOriginalBio(bioValue);
         setOriginalLocation(locationValue);
         setOriginalBirthDate(birthDateValue);
+        setOriginalAvatarUrl(avatarValue);
       }
 
       if (emailResult) {
@@ -154,6 +160,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) =>
     setBio(originalBio);
     setLocation(originalLocation);
     setBirthDate(originalBirthDate);
+    setAvatarUrl(originalAvatarUrl);
     setEditMode(false);
   };
 
@@ -171,6 +178,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) =>
         bio: bio.trim() || null,
         location: location.trim() || null,
         birth_date: birthDate.trim() || null,
+        avatar_url: avatarUrl.trim() || null,
       };
 
       const { error } = await updateUserProfile(updateData);
@@ -198,7 +206,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) =>
       setOriginalBio(bio.trim() || '');
       setOriginalLocation(location.trim() || '');
       setOriginalBirthDate(birthDate.trim() || '');
-      
+      setOriginalAvatarUrl(avatarUrl.trim() || '');
+
       loadProfile(); // Refresh profile data
     } catch (error) {
       Alert.alert('Error', 'Failed to update profile');
@@ -264,6 +273,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) =>
       >
         {/* Header Section */}
         <View style={styles.header}>
+          {originalAvatarUrl ? (
+            <Image source={{ uri: originalAvatarUrl }} style={styles.avatar} />
+          ) : (
+            <Ionicons name="person-circle-outline" size={80} color={colors.primary} style={styles.avatar} />
+          )}
           <View style={styles.headerInfo}>
             <Text style={styles.displayName}>{originalDisplayName || 'No Name'}</Text>
             <Text style={styles.role}>{profile?.role || 'Volunteer'}</Text>
@@ -301,6 +315,18 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) =>
               onChangeText={setDisplayName}
               placeholder="Enter your display name"
               editable={editMode}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Avatar URL</Text>
+            <TextInput
+              style={[styles.input, !editMode && styles.inputDisabled]}
+              value={avatarUrl}
+              onChangeText={setAvatarUrl}
+              placeholder="Enter image URL"
+              editable={editMode}
+              autoCapitalize="none"
             />
           </View>
 
@@ -417,6 +443,12 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 16,
   },
   headerInfo: {
     flex: 1,
