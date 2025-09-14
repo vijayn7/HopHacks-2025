@@ -33,7 +33,11 @@ interface GroupSummary {
   };
 }
 
-const GroupsScreen = () => {
+interface GroupsScreenProps {
+  isActive: boolean;
+}
+
+const GroupsScreen: React.FC<GroupsScreenProps> = ({ isActive }) => {
   const [groups, setGroups] = useState<GroupSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -81,6 +85,12 @@ const GroupsScreen = () => {
     const interval = setInterval(() => loadGroups(true), 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isActive) {
+      loadGroups(true);
+    }
+  }, [isActive]);
 
   // Reload groups when screen comes into focus (e.g., returning from group dashboard)
   useFocusEffect(

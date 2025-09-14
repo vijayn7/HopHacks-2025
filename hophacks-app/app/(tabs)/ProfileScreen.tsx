@@ -34,9 +34,10 @@ interface Profile {
 
 interface ProfileScreenProps {
   onSignOut: () => void;
+  isActive: boolean;
 }
 
-const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [email, setEmail] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -72,6 +73,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
     }, 60000);
     return () => clearInterval(interval);
   }, [editMode]);
+
+  useEffect(() => {
+    if (isActive && !editMode) {
+      loadProfile(true);
+    }
+  }, [isActive, editMode]);
 
   const loadProfile = async (background = false) => {
     try {

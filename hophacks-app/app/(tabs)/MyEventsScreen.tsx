@@ -10,11 +10,17 @@ import { getJoinedEvents, getCurrentUserProfile } from '../../lib/apiService';
 interface JoinedEvent extends MyEventsEventCardProps {
   org_name: string;
   distance?: string;
+  showLearnMoreButton?: boolean;
+  isOwner?: boolean;
 }
 
 type EventsByDate = Record<string, JoinedEvent[]>;
 
-const MyEventsScreen = () => {
+interface MyEventsScreenProps {
+  isActive: boolean;
+}
+
+const MyEventsScreen: React.FC<MyEventsScreenProps> = ({ isActive }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -31,6 +37,12 @@ const MyEventsScreen = () => {
     const interval = setInterval(() => init(true), 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isActive) {
+      init(true);
+    }
+  }, [isActive]);
 
   const init = async (background = false) => {
     const { data } = await getCurrentUserProfile();

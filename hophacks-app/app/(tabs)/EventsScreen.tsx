@@ -27,7 +27,11 @@ interface Event extends EventsEventCardProps {
   image_url?: string | null;
 }
 
-const EventsScreen = () => {
+interface EventsScreenProps {
+  isActive: boolean;
+}
+
+const EventsScreen: React.FC<EventsScreenProps> = ({ isActive }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +64,12 @@ const EventsScreen = () => {
       return () => clearInterval(interval);
     }
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (isActive) {
+      fetchEvents(true);
+    }
+  }, [isActive]);
 
   // Helper function to clean image URLs
   const cleanImageUrl = (url: string) => {

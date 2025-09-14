@@ -22,7 +22,11 @@ import { authService } from '../../lib/authService';
 import { router } from 'expo-router';
 import SpecificEventPage from '../../components/SpecificEventPage';
 
-const HomeScreen = () => {
+interface HomeScreenProps {
+  isActive: boolean;
+}
+
+const HomeScreen: React.FC<HomeScreenProps> = ({ isActive }) => {
   // Mock data - replace with real data later
 
   const [user, setUser] = useState({
@@ -200,6 +204,12 @@ const HomeScreen = () => {
     const interval = setInterval(() => fetchUserAndEvents(true), 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isActive) {
+      fetchUserAndEvents(true);
+    }
+  }, [isActive]);
 
   const handleViewAllActivity = () => {
     router.push('/activity-feed?userId=current');
