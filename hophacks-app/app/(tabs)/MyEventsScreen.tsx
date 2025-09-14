@@ -10,6 +10,9 @@ import { getJoinedEvents, getCurrentUserProfile } from '../../lib/apiService';
 interface JoinedEvent extends MyEventsEventCardProps {
   org_name: string;
   distance?: string;
+  image_url?: string | null;
+  showLearnMoreButton?: boolean;
+  isOwner?: boolean;
 }
 
 type EventsByDate = Record<string, JoinedEvent[]>;
@@ -83,6 +86,7 @@ const MyEventsScreen: React.FC<MyEventsScreenProps> = ({ isActive }) => {
             capacity: event.capacity,
             org_name: event.organizations?.name || 'Unknown Organization',
             distance: event.lat && event.lng ? 'Near you' : 'Location TBD',
+            image_url: event.image_url,
             onPress: undefined,
             showLearnMoreButton: false,
             isOwner: userId ? event.created_by === userId : false,
