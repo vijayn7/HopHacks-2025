@@ -1,50 +1,135 @@
-# Welcome to your Expo app 👋
+# HopHacks App 🎉
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application built with Expo for managing events, groups, and social activities.
 
-## Get started
+## Prerequisites
 
-1. Install dependencies
+Before running this app, make sure you have the following installed:
+- Node.js (v14 or higher)
+- npm or yarn
+- Expo CLI (will be installed via npx)
+- Expo Go app on your mobile device
 
-   ```bash
-   npm install
-   ```
+## Getting Started
 
-2. Start the app
+Follow these steps to run the app on your device:
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Navigate to the project directory
 ```bash
-npm run reset-project
+cd hophacks-app
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Install dependencies
+```bash
+npm install
+```
 
-## Learn more
+### 3. Set up environment variables
 
-To learn more about developing your project with Expo, look at the following resources:
+You need to configure the following environment secrets for Supabase integration:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Create a `.env` file in the root directory and add:
+```env
+SUPABASE_URL=your_supabase_url_here
+SUPABASE_API_KEY=your_supabase_api_key_here
+```
 
-## Join the community
+**Important**: Make sure to replace the placeholder values with your actual Supabase credentials.
 
-Join our community of developers creating universal apps.
+### 4. Start the development server
+```bash
+npx expo start --tunnel
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The `--tunnel` flag creates a tunnel connection that allows you to test the app on your physical device from anywhere.
+
+### 5. Install Expo Go on your phone
+
+- **iOS**: Download [Expo Go](https://apps.apple.com/app/expo-go/id982107779) from the App Store
+- **Android**: Download [Expo Go](https://play.google.com/store/apps/details?id=host.exp.exponent) from Google Play Store
+
+### 6. Scan the QR code
+
+Once the development server starts, you'll see a QR code in your terminal. Open the Expo Go app on your phone and scan this QR code to load the app.
+
+## Project Structure
+
+This app uses [Expo Router](https://docs.expo.dev/router/introduction/) for file-based routing. Key directories include:
+
+- `app/` - Main application screens and routing
+- `components/` - Reusable React components
+- `lib/` - Utility functions and services (API, auth, Supabase)
+- `constants/` - App constants and configuration
+- `assets/` - Images and other static assets
+
+## Key Features
+
+- Event management and discovery
+- Group creation and management
+- User profiles and authentication
+- Activity feeds and leaderboards
+- QR code scanning for events
+- Real-time updates with Supabase
+
+## Available Scripts
+
+- `npm start` - Start the development server
+- `npm run android` - Start for Android emulator
+- `npm run ios` - Start for iOS simulator
+- `npm run web` - Start for web browser
+- `npm run lint` - Run ESLint
+- `npm test` - Run tests
+
+## Testing on Different Platforms
+
+### Physical Device (Recommended)
+Use the steps above with Expo Go for the best development experience.
+
+### iOS Simulator
+```bash
+npm run ios
+```
+
+### Android Emulator
+```bash
+npm run android
+```
+
+### Web Browser
+```bash
+npm run web
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **QR Code not scanning**: Make sure your phone and computer are on the same network, or use the `--tunnel` flag
+2. **Metro bundler issues**: Try clearing the cache with `npx expo start --clear`
+3. **Environment variables not loading**: Restart the development server after adding `.env` file
+4. **Supabase connection issues**: Verify your Supabase URL and API key are correct
+
+### Need Help?
+
+If you encounter any issues:
+1. Check the [Expo documentation](https://docs.expo.dev/)
+2. Visit the [Expo community forum](https://forums.expo.dev/)
+3. Join the [Expo Discord](https://chat.expo.dev/)
+
+## Development
+
+This project was created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app) and uses:
+- React Native with Expo SDK 54
+- TypeScript for type safety
+- Supabase for backend services
+- Expo Router for navigation
+- Custom components for UI consistency
+
+Start developing by editing files in the `app/` directory!
+
+## Acknowledgments
+
+Made for HopHacks 2025
+BY:
+- Vijay Nannapuraju
+- Rakshith Raja
