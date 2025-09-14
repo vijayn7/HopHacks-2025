@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   StatusBar,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -79,6 +80,19 @@ const MembersScreen = () => {
     setSortedMembers(sorted);
   }, [members]);
 
+  // Helper to clean avatar URLs similar to event images
+  const cleanImageUrl = (url: string | undefined) => {
+    if (!url) return null;
+    let cleaned = url.replace(/\$0$/, '').trim();
+    try {
+      new URL(cleaned);
+      return cleaned;
+    } catch {
+      console.log('Invalid avatar URL:', url);
+      return null;
+    }
+  };
+
 
   const formatJoinDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -111,8 +125,8 @@ const MembersScreen = () => {
         </View>
         
         {sortedMembers.map((member) => (
-          <View 
-            key={member.id} 
+          <View
+            key={member.id}
             style={[
               styles.memberCard,
               member.isCurrentUser && styles.currentUserCard,
@@ -121,9 +135,16 @@ const MembersScreen = () => {
           >
             <View style={styles.memberHeader}>
               <View style={styles.memberAvatar}>
-                <Text style={styles.avatarText}>{member.name.charAt(0)}</Text>
+                {member.avatar ? (
+                  <Image
+                    source={{ uri: cleanImageUrl(member.avatar) || undefined }}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <Text style={styles.avatarText}>{member.name.charAt(0)}</Text>
+                )}
               </View>
-              
+
               <View style={styles.memberInfo}>
                 <View style={styles.nameRow}>
                   <Text style={[
@@ -233,11 +254,17 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    overflow: 'hidden',
   },
   avatarText: {
     fontSize: 18,
     fontWeight: '600',
     color: colors.textWhite,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
   },
   memberInfo: {
     flex: 1,

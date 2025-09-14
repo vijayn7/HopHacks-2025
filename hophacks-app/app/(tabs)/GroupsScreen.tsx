@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -106,6 +107,19 @@ const GroupsScreen: React.FC<GroupsScreenProps> = ({ isActive }) => {
       loadGroups(true);
     }, [])
   );
+
+  // Helper to clean avatar URLs similar to event images
+  const cleanImageUrl = (url: string | undefined) => {
+    if (!url) return null;
+    let cleaned = url.replace(/\$0$/, '').trim();
+    try {
+      new URL(cleaned);
+      return cleaned;
+    } catch {
+      console.log('Invalid avatar URL:', url);
+      return null;
+    }
+  };
 
   const handleGroupPress = (groupId: string) => {
     router.push(`/group-dashboard/${groupId}`);
@@ -300,7 +314,14 @@ const GroupsScreen: React.FC<GroupsScreenProps> = ({ isActive }) => {
                 <Text style={styles.topMemberLabel}>Leading the way</Text>
                 <View style={styles.topMemberRow}>
                   <View style={styles.topMemberAvatar}>
-                    <Text style={styles.avatarText}>{group.topMember.name.charAt(0)}</Text>
+                    {group.topMember.avatar ? (
+                      <Image
+                        source={{ uri: cleanImageUrl(group.topMember.avatar) || undefined }}
+                        style={styles.avatarImage}
+                      />
+                    ) : (
+                      <Text style={styles.avatarText}>{group.topMember.name.charAt(0)}</Text>
+                    )}
                   </View>
                   <Text style={styles.topMemberName}>{group.topMember.name}</Text>
                 </View>
@@ -533,11 +554,17 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
+    overflow: 'hidden',
   },
   avatarText: {
     fontSize: 12,
     fontWeight: '600',
     color: colors.textWhite,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 14,
   },
   topMemberName: {
     fontSize: 14,

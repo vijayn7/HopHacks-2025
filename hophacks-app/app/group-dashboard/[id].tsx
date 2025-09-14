@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -183,6 +184,19 @@ const GroupDashboardScreen = () => {
   };
 
   const progressPercentage = group ? group.progressPercentage : 0;
+
+  // Helper to clean avatar URLs similar to event images
+  const cleanImageUrl = (url: string | undefined) => {
+    if (!url) return null;
+    let cleaned = url.replace(/\$0$/, '').trim();
+    try {
+      new URL(cleaned);
+      return cleaned;
+    } catch {
+      console.log('Invalid avatar URL:', url);
+      return null;
+    }
+  };
   
   // Get current month name
   const currentMonth = new Date().toLocaleString('default', { month: 'long' });
@@ -265,7 +279,14 @@ const GroupDashboardScreen = () => {
                 <Text style={styles.rankNumber}>#{member.rank}</Text>
               </View>
               <View style={styles.memberAvatar}>
-                <Text style={styles.avatarText}>{member.name.charAt(0)}</Text>
+                {member.avatar ? (
+                  <Image
+                    source={{ uri: cleanImageUrl(member.avatar) || undefined }}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <Text style={styles.avatarText}>{member.name.charAt(0)}</Text>
+                )}
               </View>
               <View style={styles.memberInfo}>
                 <Text style={styles.memberName}>{member.name}</Text>
@@ -306,25 +327,28 @@ const GroupDashboardScreen = () => {
           <Text style={styles.cardTitle}>👥 Members</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </View>
-        <View style={styles.membersPreview}>
-          <View style={styles.avatarCluster}>
-            {group.members.slice(0, 4).map((member, index) => (
-              <View key={member.id} style={[
-                styles.clusterAvatar,
-                { marginLeft: index > 0 ? -8 : 0 }
-              ]}>
+          <View style={styles.membersPreview}>
+            <View style={styles.avatarCluster}>
+              {group.members.slice(0, 4).map((member, index) => (
+                <View key={member.id} style={[
+                  styles.clusterAvatar,
+                  { marginLeft: index > 0 ? -8 : 0 }
+                ]}>
                 {member.avatar ? (
-                  <Text style={styles.clusterAvatarText}>{member.name.charAt(0)}</Text>
+                  <Image
+                    source={{ uri: cleanImageUrl(member.avatar) || undefined }}
+                    style={styles.clusterAvatarImage}
+                  />
                 ) : (
                   <Text style={styles.clusterAvatarText}>{member.name.charAt(0)}</Text>
                 )}
-              </View>
-            ))}
-            {group.memberCount > 4 && (
-              <View style={[styles.moreAvatars, { marginLeft: -8 }]}>
-                <Text style={styles.moreAvatarsText}>+{group.memberCount - 4}</Text>
-              </View>
-            )}
+                </View>
+              ))}
+              {group.memberCount > 4 && (
+                <View style={[styles.moreAvatars, { marginLeft: -8 }]}>
+                  <Text style={styles.moreAvatarsText}>+{group.memberCount - 4}</Text>
+                </View>
+              )}
           </View>
           <Text style={styles.memberSummary}>{group.memberCount} Members</Text>
         </View>
@@ -630,11 +654,17 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 12,
+    overflow: 'hidden',
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.textWhite,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
   memberInfo: {
     flex: 1,
@@ -702,11 +732,17 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     marginLeft: -8,
     borderWidth: 2,
     borderColor: colors.surface,
+    overflow: 'hidden',
   },
   clusterAvatarText: {
     fontSize: 12,
     fontWeight: '600',
     color: colors.textWhite,
+  },
+  clusterAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
   },
   moreAvatars: {
     width: 32,

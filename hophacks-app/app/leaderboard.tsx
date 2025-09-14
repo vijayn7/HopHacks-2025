@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -68,6 +69,19 @@ const LeaderboardScreen = () => {
     loadLeaderboard();
   }, [groupId]);
 
+  // Helper to clean image URLs similar to event images
+  const cleanImageUrl = (url: string | undefined) => {
+    if (!url) return null;
+    let cleaned = url.replace(/\$0$/, '').trim();
+    try {
+      new URL(cleaned);
+      return cleaned;
+    } catch {
+      console.log('Invalid avatar URL:', url);
+      return null;
+    }
+  };
+
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
@@ -108,8 +122,8 @@ const LeaderboardScreen = () => {
       {/* Leaderboard Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {members.map((member) => (
-          <View 
-            key={member.id} 
+          <View
+            key={member.id}
             style={[
               styles.memberRow,
               member.isCurrentUser && styles.currentUserRow,
@@ -121,9 +135,16 @@ const LeaderboardScreen = () => {
                 {getRankIcon(member.rank)}
               </Text>
             </View>
-            
+
             <View style={styles.memberAvatar}>
-              <Text style={styles.avatarText}>{member.name.charAt(0)}</Text>
+              {member.avatar ? (
+                <Image
+                  source={{ uri: cleanImageUrl(member.avatar) || undefined }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <Text style={styles.avatarText}>{member.name.charAt(0)}</Text>
+              )}
             </View>
             
             <View style={styles.memberInfo}>
@@ -206,11 +227,17 @@ const createStyles = (colors: ColorScheme, theme: 'light' | 'dark') => StyleShee
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 16,
+    overflow: 'hidden',
   },
   avatarText: {
     fontSize: 18,
     fontWeight: '600',
     color: colors.textWhite,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
   },
   memberInfo: {
     flex: 1,

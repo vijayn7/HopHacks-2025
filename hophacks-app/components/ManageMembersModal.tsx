@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -17,6 +18,7 @@ import { getGroupMembers, removeGroupMember } from '../lib/apiService';
 interface GroupMember {
   id: string;
   name: string;
+  avatar?: string;
   joinDate: string;
   isAdmin: boolean;
   isCurrentUser?: boolean;
@@ -84,6 +86,19 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({
         }
       ]
     );
+  };
+
+  // Helper to clean avatar URLs similar to event images
+  const cleanImageUrl = (url: string | undefined) => {
+    if (!url) return null;
+    let cleaned = url.replace(/\$0$/, '').trim();
+    try {
+      new URL(cleaned);
+      return cleaned;
+    } catch {
+      console.log('Invalid avatar URL:', url);
+      return null;
+    }
   };
 
   const confirmRemoveMember = async (memberId: string, memberName: string) => {
@@ -165,7 +180,7 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({
                 <Ionicons name="people-outline" size={64} color={colors.textSecondary} />
                 <Text style={styles.emptyTitle}>No Other Members</Text>
                 <Text style={styles.emptySubtitle}>
-                  You're the only member in this group. Invite others using the group's invite code to start building your team!
+                  You&apos;re the only member in this group. Invite others using the group&apos;s invite code to start building your team!
                 </Text>
               </View>
             ) : (
@@ -173,9 +188,16 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({
                 <View key={member.id} style={styles.memberItem}>
                   <View style={styles.memberInfo}>
                     <View style={styles.memberAvatar}>
-                      <Text style={styles.avatarText}>
-                        {member.name.charAt(0).toUpperCase()}
-                      </Text>
+                      {member.avatar ? (
+                        <Image
+                          source={{ uri: cleanImageUrl(member.avatar) || undefined }}
+                          style={styles.avatarImage}
+                        />
+                      ) : (
+                        <Text style={styles.avatarText}>
+                          {member.name.charAt(0).toUpperCase()}
+                        </Text>
+                      )}
                     </View>
                     <View style={styles.memberDetails}>
                       <View style={styles.memberNameRow}>
@@ -277,11 +299,17 @@ const createStyles = (colors: ColorScheme) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    overflow: 'hidden',
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
   memberDetails: {
     flex: 1,
