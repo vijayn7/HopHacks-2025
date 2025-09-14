@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import type { ColorScheme } from '../../constants/colors';
 import MyEventsEventCard, { MyEventsEventCardProps } from '../../components/MyEvents/MyEventsEventCard';
@@ -11,11 +11,17 @@ interface JoinedEvent extends MyEventsEventCardProps {
   org_name: string;
   distance?: string;
   image_url?: string | null;
+  showLearnMoreButton?: boolean;
+  isOwner?: boolean;
 }
 
 type EventsByDate = Record<string, JoinedEvent[]>;
 
-const MyEventsScreen = () => {
+interface MyEventsScreenProps {
+  isActive: boolean;
+}
+
+const MyEventsScreen: React.FC<MyEventsScreenProps> = ({ isActive }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -26,12 +32,19 @@ const MyEventsScreen = () => {
   const [eventPageVisible, setEventPageVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     init();
     const interval = setInterval(() => init(true), 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isActive) {
+      init(true);
+    }
+  }, [isActive]);
 
   const init = async (background = false) => {
     const { data } = await getCurrentUserProfile();
@@ -93,6 +106,12 @@ const MyEventsScreen = () => {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await init(true);
+    setRefreshing(false);
+  };
+
   const openEvent = (id: string) => {
     setSelectedEventId(id);
     setEventPageVisible(true);
@@ -129,9 +148,20 @@ const MyEventsScreen = () => {
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-      </View>
+      <ScrollView
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        }
+      >
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Error: {error}</Text>
+        </View>
+      </ScrollView>
     );
   }
 
@@ -141,7 +171,17 @@ const MyEventsScreen = () => {
 
   return (
     <>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        }
+      >
         {sortedDates.length > 0 ? (
           sortedDates.map((date) => (
             <View key={date} style={styles.dateSection}>

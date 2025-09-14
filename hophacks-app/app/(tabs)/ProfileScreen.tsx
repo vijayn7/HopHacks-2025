@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  RefreshControl,
   TextInput,
   TouchableOpacity,
   Image,
@@ -32,14 +33,16 @@ interface Profile {
 
 interface ProfileScreenProps {
   onSignOut: () => void;
+  isActive: boolean;
 }
 
-const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut, isActive }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [email, setEmail] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
   
@@ -70,6 +73,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
     }, 60000);
     return () => clearInterval(interval);
   }, [editMode]);
+
+  useEffect(() => {
+    if (isActive && !editMode) {
+      loadProfile(true);
+    }
+  }, [isActive, editMode]);
 
   const loadProfile = async (background = false) => {
     try {
@@ -129,6 +138,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
     } finally {
       if (!background) setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadProfile(true);
+    setRefreshing(false);
   };
 
   const handleCancel = () => {
@@ -235,7 +250,18 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignOut }) => {
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            enabled={!editMode}
+          />
+        }
+      >
         {/* Header Section */}
         <View style={styles.header}>
           <View style={styles.headerInfo}>

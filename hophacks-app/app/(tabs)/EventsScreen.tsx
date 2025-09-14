@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  RefreshControl,
   ActivityIndicator,
   Animated,
   Dimensions,
@@ -27,7 +28,11 @@ interface Event extends EventsEventCardProps {
   image_url?: string | null;
 }
 
-const EventsScreen = () => {
+interface EventsScreenProps {
+  isActive: boolean;
+}
+
+const EventsScreen: React.FC<EventsScreenProps> = ({ isActive }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +43,7 @@ const EventsScreen = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [qrVisible, setQrVisible] = useState(false);
   const [qrEventId, setQrEventId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const animations = useRef<Record<string, { slide: Animated.Value; bubble: Animated.Value }>>({});
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -60,6 +66,12 @@ const EventsScreen = () => {
       return () => clearInterval(interval);
     }
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (isActive) {
+      fetchEvents(true);
+    }
+  }, [isActive]);
 
   // Helper function to clean image URLs
   const cleanImageUrl = (url: string) => {
@@ -134,6 +146,12 @@ const EventsScreen = () => {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchEvents(true);
+    setRefreshing(false);
+  };
+
   const openEvent = (id: string) => {
     setSelectedEventId(id);
     setEventPageVisible(true);
@@ -192,15 +210,36 @@ const EventsScreen = () => {
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-      </View>
+      <ScrollView
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        }
+      >
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Error: {error}</Text>
+        </View>
+      </ScrollView>
     );
   }
 
   return (
     <>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        }
+      >
         <View style={styles.header}>
           <Text style={styles.title}>All Events</Text>
           <Text style={styles.subtitle}>Find volunteering opportunities near you</Text>

@@ -72,19 +72,22 @@ export default function Index() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.screenContainer}>
           <View style={[styles.tabView, activeTab !== 'home' && styles.hidden]}>
-            <HomeScreen />
+            <HomeScreen isActive={activeTab === 'home'} />
           </View>
           <View style={[styles.tabView, activeTab !== 'events' && styles.hidden]}>
-            <EventsScreen />
+            <EventsScreen isActive={activeTab === 'events'} />
           </View>
           <View style={[styles.tabView, activeTab !== 'myEvents' && styles.hidden]}>
-            <MyEventsScreen />
+            <MyEventsScreen isActive={activeTab === 'myEvents'} />
           </View>
           <View style={[styles.tabView, activeTab !== 'groups' && styles.hidden]}>
-            <GroupsScreen />
+            <GroupsScreen isActive={activeTab === 'groups'} />
           </View>
           <View style={[styles.tabView, activeTab !== 'profile' && styles.hidden]}>
-            <ProfileScreen onSignOut={() => setIsAuthenticated(false)} />
+            <ProfileScreen
+              onSignOut={() => setIsAuthenticated(false)}
+              isActive={activeTab === 'profile'}
+            />
           </View>
         </View>
       </SafeAreaView>

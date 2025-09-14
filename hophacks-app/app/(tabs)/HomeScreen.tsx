@@ -3,6 +3,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
@@ -22,7 +23,11 @@ import { authService } from '../../lib/authService';
 import { router } from 'expo-router';
 import SpecificEventPage from '../../components/SpecificEventPage';
 
-const HomeScreen = () => {
+interface HomeScreenProps {
+  isActive: boolean;
+}
+
+const HomeScreen: React.FC<HomeScreenProps> = ({ isActive }) => {
   // Mock data - replace with real data later
 
   const [user, setUser] = useState({
@@ -37,6 +42,7 @@ const HomeScreen = () => {
   const [suggestedEvents, setSuggestedEvents] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
     const [eventPageVisible, setEventPageVisible] = useState(false);
     const animations = useRef<Record<string, { slide: Animated.Value; bubble: Animated.Value }>>({});
@@ -195,11 +201,23 @@ const HomeScreen = () => {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserAndEvents(true);
+    setRefreshing(false);
+  };
+
   useEffect(() => {
     fetchUserAndEvents();
     const interval = setInterval(() => fetchUserAndEvents(true), 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isActive) {
+      fetchUserAndEvents(true);
+    }
+  }, [isActive]);
 
   const handleViewAllActivity = () => {
     router.push('/activity-feed?userId=current');
@@ -259,7 +277,17 @@ const HomeScreen = () => {
 
   return (
     <>
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+        />
+      }
+    >
       {/* Profile Widget */}
       <View style={styles.profileWidget}>
         <View style={styles.profileIcon}>
