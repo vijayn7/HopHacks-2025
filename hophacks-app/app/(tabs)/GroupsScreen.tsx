@@ -33,7 +33,11 @@ interface GroupSummary {
   };
 }
 
-const GroupsScreen = () => {
+interface GroupsScreenProps {
+  isActive: boolean;
+}
+
+const GroupsScreen: React.FC<GroupsScreenProps> = ({ isActive }) => {
   const [groups, setGroups] = useState<GroupSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -43,9 +47,9 @@ const GroupsScreen = () => {
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   // Load groups from database
-  const loadGroups = async () => {
+  const loadGroups = async (background = false) => {
     try {
-      setLoading(true);
+      if (!background) setLoading(true);
       const { data: groupsData, error } = await getUserGroups();
       
       if (error) {
@@ -72,18 +76,26 @@ const GroupsScreen = () => {
       console.error('Error loading groups:', error);
       Alert.alert('Error', 'Failed to load groups. Please try again.');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadGroups();
+    const interval = setInterval(() => loadGroups(true), 60000);
+    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isActive) {
+      loadGroups(true);
+    }
+  }, [isActive]);
 
   // Reload groups when screen comes into focus (e.g., returning from group dashboard)
   useFocusEffect(
     React.useCallback(() => {
-      loadGroups();
+      loadGroups(true);
     }, [])
   );
 

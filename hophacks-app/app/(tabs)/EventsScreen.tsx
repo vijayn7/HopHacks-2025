@@ -27,7 +27,11 @@ interface Event extends EventsEventCardProps {
   image_url?: string | null;
 }
 
-const EventsScreen = () => {
+interface EventsScreenProps {
+  isActive: boolean;
+}
+
+const EventsScreen: React.FC<EventsScreenProps> = ({ isActive }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +60,16 @@ const EventsScreen = () => {
   useEffect(() => {
     if (currentUserId) {
       fetchEvents();
+      const interval = setInterval(() => fetchEvents(true), 60000);
+      return () => clearInterval(interval);
     }
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (isActive) {
+      fetchEvents(true);
+    }
+  }, [isActive]);
 
   // Helper function to clean image URLs
   const cleanImageUrl = (url: string) => {
@@ -84,16 +96,18 @@ const EventsScreen = () => {
     }
   };
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (background = false) => {
     try {
-      setLoading(true);
-      setError(null);
-      
+      if (!background) {
+        setLoading(true);
+        setError(null);
+      }
+
       // Fetch events the user hasn't joined
       const { data, error } = await getUnjoinedEvents();
 
       if (error) {
-        setError(error.message || 'Failed to fetch events');
+        if (!background) setError(error.message || 'Failed to fetch events');
         return;
       }
 
@@ -124,9 +138,9 @@ const EventsScreen = () => {
         setEvents(transformedEvents);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch events');
+      if (!background) setError(err instanceof Error ? err.message : 'Failed to fetch events');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   };
 

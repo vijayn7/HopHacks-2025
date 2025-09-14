@@ -14,7 +14,11 @@ interface JoinedEvent extends MyEventsEventCardProps {
 
 type EventsByDate = Record<string, JoinedEvent[]>;
 
-const MyEventsScreen = () => {
+interface MyEventsScreenProps {
+  isActive: boolean;
+}
+
+const MyEventsScreen: React.FC<MyEventsScreenProps> = ({ isActive }) => {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -28,25 +32,35 @@ const MyEventsScreen = () => {
 
   useEffect(() => {
     init();
+    const interval = setInterval(() => init(true), 60000);
+    return () => clearInterval(interval);
   }, []);
 
-  const init = async () => {
+  useEffect(() => {
+    if (isActive) {
+      init(true);
+    }
+  }, [isActive]);
+
+  const init = async (background = false) => {
     const { data } = await getCurrentUserProfile();
     if (data) {
       setCurrentUserId(data.id);
     }
-    fetchJoinedEvents(data?.id);
+    fetchJoinedEvents(data?.id, background);
   };
 
-  const fetchJoinedEvents = async (userId?: string) => {
+  const fetchJoinedEvents = async (userId?: string, background = false) => {
     try {
-      setLoading(true);
-      setError(null);
+      if (!background) {
+        setLoading(true);
+        setError(null);
+      }
 
       const { data, error } = await getJoinedEvents();
 
       if (error) {
-        setError(error.message || 'Failed to fetch events');
+        if (!background) setError(error.message || 'Failed to fetch events');
         return;
       }
 
@@ -81,9 +95,9 @@ const MyEventsScreen = () => {
 
       setEventsByDate(grouped);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch events');
+      if (!background) setError(err instanceof Error ? err.message : 'Failed to fetch events');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   };
 
@@ -100,7 +114,7 @@ const MyEventsScreen = () => {
   const handleEventLeft = () => {
     closeEvent();
     // Refresh the joined events list
-    fetchJoinedEvents(currentUserId || undefined);
+    fetchJoinedEvents(currentUserId || undefined, true);
   };
 
   const formatDateLabel = (dateStr: string) => {
