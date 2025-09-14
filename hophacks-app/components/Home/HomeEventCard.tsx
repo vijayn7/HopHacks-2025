@@ -207,6 +207,8 @@ const createStyles = (colors: ColorScheme) =>
       color: colors.textPrimary,
       flex: 1,
       marginRight: 8,
+      minHeight: 40, // Ensures minimum height for 2 lines (16px * 1.25 line height * 2 lines)
+      lineHeight: 20,
     },
     eventTime: {
       fontSize: 12,
